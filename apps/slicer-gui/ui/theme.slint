@@ -1,0 +1,69 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { Palette } from "std-widgets.slint";
+export global ShellTheme {
+    in-out property <bool> light: false;
+    // Sleptic palette: neutral greys and white, one primary-blue accent.
+    // Red (error/islands) and yellow (warning) are reserved for meaning;
+    // supports are a light neutral grey so they read apart from the model.
+    out property <color> background: light ? #f3f4f6 : #1b1c1f;
+    out property <color> panel: light ? #ffffff : #24262a;
+    out property <color> field: light ? #e9ebee : #2f3136;
+    out property <color> text: light ? #1c1e21 : #eceef1;
+    out property <color> muted: light ? #5f656d : #a3a8b0;
+    out property <color> border: light ? #d3d7dc : #3b3e44;
+    out property <color> support: #c9ced6;
+    // Lit area of a layer in the 2D layer view.
+    out property <color> layer-fill: light ? #4b5563 : #d5d9df;
+    out property <color> accent: light ? #1565c0 : #2f81f7;
+    // Text and icons drawn on an accent fill (primary buttons).
+    out property <color> accent-text: #ffffff;
+    // Sleptic's three colours, each with one meaning (R94; R53 spread them
+    // evenly over every icon, which said nothing): blue for navigation and
+    // selection (tabs, Slice, section icons, the active tool), yellow for the
+    // automatic actions (Auto prepare), red for removing and for problems
+    // (Delete, islands, errors). Other tool icons are the plain text colour.
+    out property <color> icon-blue: light ? #1565c0 : #4b92ee;
+    out property <color> icon-yellow: light ? #c99400 : #f2c230;
+    out property <color> icon-red: light ? #d03b3b : #ff6b6b;
+    public pure function icon-tint(tint: int) -> color {
+        if tint == 0 { return icon-blue; }
+        if tint == 1 { return icon-yellow; }
+        if tint == 2 { return icon-red; }
+        return text;
+    }
+    out property <color> accent-hover: light ? #0d4fa0 : #4a93f8;
+    out property <length> radius: 6px;
+    // Kept equal to slice_cap.rs's SLICE_VIEW_ISLAND_RGB (island painting).
+    out property <color> axis-x: #e45252;
+    out property <color> axis-y: #54b86a;
+    out property <color> axis-z: #4b92ee;
+    out property <color> error: light ? #ba2929 : #ff7777;
+    out property <color> warning: light ? #8a5b00 : #e5a500;
+    out property <color> viewport: light ? #e6e8eb : #1a1b1e;
+    // Text/glyphs drawn onto the 3D scene (plate tool tiles); the scene
+    // follows the theme (light grey bed in light mode).
+    out property <color> canvas-text: light ? #2b2f36 : #e6e8eb;
+    out property <color> canvas-accent: light ? #1565c0 : #2f81f7;
+    out property <color> dim: #888;
+    out property <color> preview: light ? #dfe2e6 : #121315;
+    out property <color> shadow: #00000040;
+    out property <color> scrim: #00000055;
+    out property <color> modal-scrim: #000000cc;
+    out property <color> panel-shadow: #0000004d;
+    out property <color> caution: light ? #a6530e : #e89a50;
+    // Editing plane: orange. Stale supports retain warning yellow (#e5a500).
+    out property <color> cut-plane: #e46b26;
+    out property <color> tag-1d4a29: #1d4a29;
+    out property <color> tag-cdeed6: #cdeed6;
+    out property <color> tag-4a3d14: #4a3d14;
+    out property <color> tag-fcecc5: #fcecc5;
+    out property <color> tag-571e24: #571e24;
+    out property <color> tag-f6d3d7: #f6d3d7;
+    out property <color> tag-a9e8b8: #a9e8b8;
+    out property <color> tag-0d5223: #0d5223;
+    out property <color> tag-f0d284: #f0d284;
+    out property <color> tag-6b4e00: #6b4e00;
+    out property <color> tag-f2b4bc: #f2b4bc;
+    out property <color> tag-8a1c28: #8a1c28;
+}

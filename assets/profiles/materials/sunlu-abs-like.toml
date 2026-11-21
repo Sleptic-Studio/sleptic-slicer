@@ -1,0 +1,26 @@
+[identity]
+id = "sunlu-abs-like"
+brand = "Sunlu"
+family = "abs-like"
+name = "ABS-Like Resin"
+profile_version = "1.0.0"
+
+[intent]
+target_layer_height_mm = 0.05
+
+[defaults]
+density_g_ml = 1.1
+bottom_layer_count = 5
+support_overhang_angle_deg = 45.0
+
+[defaults.scale_compensation_pct]
+x = 0.0
+y = 0.0
+z = 0.0
+
+[per_printer.generic-machine]
+normal_exposure_sec = 3.0
+bottom_exposure_sec = 35.0
+lift_distance_mm = 7.0
+lift_speed_mm_min = 60.0
+retract_speed_mm_min = 150.0

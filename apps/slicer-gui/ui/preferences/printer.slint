@@ -1,0 +1,242 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// Preferences > Printers: maker tabs, a search box, a gallery of printer
+// tiles that wraps to the page width, and the profile actions.
+
+import { LineEdit, ScrollView, Palette } from "std-widgets.slint";
+import { SecondaryButton as Button } from "../secondary-button.slint";
+import { ShellTheme } from "../theme.slint";
+import { PreferencesPage } from "./preferences-page.slint";
+import { PreferenceFavoriteMarker } from "./favourite-star.slint";
+
+// One printer in the gallery. `id-index` is its place in the whole catalogue,
+// which the page reports back: the gallery may show only a filtered part.
+export struct PrinterEntry {
+    label: string,
+    picture: image,
+    has-picture: bool,
+    user-made: bool,
+    starred: bool,
+    catalogue-index: int,
+}
+
+// A printer's tile: picture (or a placeholder), name, a "custom" tag for
+// user profiles, and a favourite star that works apart from the tile.
+component Tile inherits Rectangle {
+    in property <PrinterEntry> card;
+    in property <bool> chosen;
+    callback picked();
+    callback starred();
+
+    property <string> no-picture: @tr("PreferencesPage" => "No image");
+    property <string> custom-tag: @tr("PreferencesPage" => "custom");
+
+    border-radius: 6px;
+    border-width: self.chosen ? 2px : 1px;
+    border-color: self.chosen ? ShellTheme.accent : ShellTheme.border;
+    background: self.chosen ? ShellTheme.accent.with-alpha(0.06) : ShellTheme.panel;
+
+    TouchArea {
+        clicked => { root.picked(); }
+    }
+
+    VerticalLayout {
+        padding: 6px;
+        spacing: 4px;
+        if root.card.has-picture: Image {
+            height: 96px;
+            source: root.card.picture;
+            image-fit: contain;
+        }
+        if !root.card.has-picture: Rectangle {
+            height: 96px;
+            background: Palette.background;
+            border-radius: 4px;
+            Text {
+                text: root.no-picture;
+                color: Palette.foreground.transparentize(0.5);
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+        Text {
+            text: root.card.label;
+            font-size: 0.9rem;
+            wrap: word-wrap;
+            horizontal-alignment: center;
+        }
+        if root.card.user-made: Text {
+            text: root.custom-tag;
+            font-size: 0.7rem;
+            color: Palette.foreground.transparentize(0.4);
+            horizontal-alignment: center;
+        }
+    }
+
+    // After the touch area, so a click on the star does not pick the tile.
+    PreferenceFavoriteMarker {
+        x: root.width - self.width - 4px;
+        y: 4px;
+        preference-marked: root.card.starred;
+        preference-toggle-requested => { root.starred(); }
+    }
+}
+
+export component PrinterPage inherits PreferencesPage {
+    page-title: @tr("PreferencesPage" => "Printers");
+    subtitle: @tr("PreferencesPage" => "Pick your printer, star favourites, and edit, duplicate, import or export printer profiles.");
+    stretch-content: true;
+
+    in property <[PrinterEntry]> tiles;
+    in property <[string]> makers;
+    in-out property <int> maker-shown: 0;
+    // The chosen printer's catalogue index (-1: none).
+    in-out property <int> chosen-printer: -1;
+    // Its place among the tiles shown, for scrolling it into view.
+    in property <int> chosen-tile: -1;
+    // Set by the window when the page opens, cleared once the gallery has
+    // been scrolled to the chosen printer; kept by the window so a page
+    // built again does not scroll a second time.
+    in-out property <bool> scroll-to-choice: false;
+    in property <string> query;
+
+    callback maker-picked(int);
+    callback query-edited(string);
+    callback printer-picked(int);
+    // (catalogue index, true to duplicate rather than edit)
+    callback open-printer(int, bool);
+    callback star-toggled(int);
+    callback import-package();
+    callback export-printers();
+
+    property <length> tile-width: 128px;
+    property <length> tile-height: 148px;
+    property <length> gap: 12px;
+    property <bool> have-choice: self.chosen-printer >= 0;
+    property <string> search-hint: @tr("PreferencesPage" => "Search models");
+    property <string> search-name: @tr("PreferencesPage" => "Search printer models");
+    property <string> edit-text: @tr("Edit selected printer");
+    property <string> duplicate-text: @tr("Duplicate printer");
+    property <string> import-text: @tr("PreferencesPage" => "Import package...");
+    property <string> export-text: @tr("PreferencesPage" => "Export printers...");
+
+    // The maker tabs: one row that scrolls sideways when it is too long.
+    ScrollView {
+        height: 40px;
+        vertical-stretch: 0;
+        HorizontalLayout {
+            alignment: start;
+            spacing: 6px;
+            for maker[i] in root.makers: Button {
+                text: maker;
+                primary: root.maker-shown == i;
+                clicked => {
+                    root.maker-shown = i;
+                    root.maker-picked(i);
+                }
+            }
+        }
+    }
+
+    HorizontalLayout {
+        vertical-stretch: 0;
+        spacing: 8px;
+        LineEdit {
+            horizontal-stretch: 1;
+            text: root.query;
+            placeholder-text: root.search-hint;
+            accessible-label: root.search-name;
+            edited(typed) => {
+                root.query-edited(typed);
+            }
+        }
+        Button {
+            horizontal-stretch: 0;
+            text: root.edit-text;
+            enabled: root.have-choice;
+            clicked => {
+                root.open-printer(root.chosen-printer, false);
+            }
+        }
+        Button {
+            horizontal-stretch: 0;
+            text: root.duplicate-text;
+            enabled: root.have-choice;
+            clicked => {
+                root.open-printer(root.chosen-printer, true);
+            }
+        }
+    }
+
+    // As many tile columns as fit, the rows centred in the page.
+    gallery := ScrollView {
+        property <length> pitch-x: root.tile-width + root.gap;
+        property <length> pitch-y: root.tile-height + root.gap;
+        property <int> columns: Math.max(1, Math.floor((self.visible-width + root.gap) / self.pitch-x));
+        property <length> margin: Math.max(0px, (self.visible-width - (self.columns * self.pitch-x - root.gap)) / 2);
+        vertical-stretch: 1;
+        viewport-height: Math.ceil(root.tiles.length / self.columns) * self.pitch-y;
+
+        // Scroll so the chosen printer's row sits mid-view, never past
+        // either end.
+        function show-choice() {
+            if (root.chosen-tile < 0 || self.visible-width <= 0px) {
+                return;
+            }
+            let row-top = Math.floor(root.chosen-tile / self.columns) * self.pitch-y;
+            let wanted = row-top - (self.visible-height - root.tile-height) / 2;
+            let furthest = Math.max(0px, self.viewport-height - self.visible-height);
+            self.viewport-y = -Math.min(furthest, Math.max(0px, wanted));
+        }
+
+        // Rows reflow when the width changes; keep the choice in view.
+        changed visible-width => {
+            self.show-choice();
+        }
+
+        // The first scroll waits until the gallery has a width, which may
+        // come before the width-change handler exists.
+        Timer {
+            interval: 16ms;
+            running: root.scroll-to-choice && gallery.visible-width > 0px;
+            triggered => {
+                root.scroll-to-choice = false;
+                gallery.show-choice();
+            }
+        }
+
+        for card[i] in root.tiles: Tile {
+            x: gallery.margin + Math.mod(i, gallery.columns) * gallery.pitch-x;
+            y: Math.floor(i / gallery.columns) * gallery.pitch-y;
+            width: root.tile-width;
+            height: root.tile-height;
+            card: card;
+            chosen: root.chosen-printer == card.catalogue-index;
+            picked => {
+                root.chosen-printer = card.catalogue-index;
+                root.printer-picked(card.catalogue-index);
+            }
+            starred => {
+                root.star-toggled(card.catalogue-index);
+            }
+        }
+    }
+
+    HorizontalLayout {
+        alignment: start;
+        spacing: 8px;
+        vertical-stretch: 0;
+        Button {
+            text: root.import-text;
+            clicked => {
+                root.import-package();
+            }
+        }
+        Button {
+            text: root.export-text;
+            clicked => {
+                root.export-printers();
+            }
+        }
+    }
+}

@@ -1,0 +1,100 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ComboBox, LineEdit } from "std-widgets.slint";
+import { PreferencesPage, SettingsCard, SettingRow, SettingDivider } from "./preferences-page.slint";
+
+// Which theme the app uses; `System` follows the operating system.
+export enum ThemePreference { System, Light, Dark }
+
+export component AppearancePage inherits PreferencesPage {
+    page-title: @tr("PreferencesPage" => "Appearance");
+    subtitle: @tr("PreferencesPage" => "How Sleptic Slicer looks, and the language it uses.");
+
+    in-out property <ThemePreference> chosen-appearance-theme: ThemePreference.System;
+    callback appearance-theme-chosen(ThemePreference);
+
+    // The languages, listed by Rust (src/language.rs): first "System",
+    // the operating system's language, then each bundled translation in
+    // the order build.rs finds them.
+    in property <[string]> available-display-languages;
+    in-out property <int> chosen-language-position: 0;
+    callback display-language-chosen(int);
+
+    // Prefix shown before an estimated resin cost in the Slice panel
+    // (e.g. "$", "€", "£"). A plain display prefix, not a validated
+    // currency code: any non-empty text is accepted as-is.
+    in-out property <string> currency-symbol-text: "$";
+    callback currency-symbol-edited(string);
+
+    // The box's entries, in the order of `themes` below.
+    property <[string]> appearance-theme-labels: [
+        @tr("AppearancePage" => "System"),
+        @tr("AppearancePage" => "Light"),
+        @tr("AppearancePage" => "Dark"),
+    ];
+
+    // The theme each entry stands for. Any other index (none picked) means
+    // System, the first.
+    property <[ThemePreference]> themes: [ThemePreference.System, ThemePreference.Light, ThemePreference.Dark];
+
+    function appearance-theme-at-position(i: int) -> ThemePreference {
+        return i >= 0 && i < root.themes.length ? root.themes[i] : ThemePreference.System;
+    }
+
+    function index-for-theme(theme: ThemePreference) -> int {
+        return theme == ThemePreference.Dark ? 2 : theme == ThemePreference.Light ? 1 : 0;
+    }
+
+    SettingsCard {
+        SettingRow {
+            label: @tr("AppearancePage" => "Theme");
+            description: @tr("AppearancePage" => "Follow the system, or always use light or dark.");
+            ComboBox {
+                width: 200px;
+                model: root.appearance-theme-labels;
+                current-index: root.index-for-theme(root.chosen-appearance-theme);
+                accessible-label: @tr("AppearancePage" => "Theme");
+                selected(_value) => {
+                    root.chosen-appearance-theme = root.appearance-theme-at-position(self.current-index);
+                    root.appearance-theme-chosen(root.chosen-appearance-theme);
+                }
+            }
+        }
+        SettingDivider { }
+        SettingRow {
+            label: @tr("AppearancePage" => "Language");
+            description: @tr("AppearancePage" => "The language of menus, settings and messages.");
+            ComboBox {
+                width: 200px;
+                model: root.available-display-languages;
+                current-index: root.chosen-language-position;
+                accessible-label: @tr("AppearancePage" => "Language");
+                selected(_value) => {
+                    root.chosen-language-position = self.current-index;
+                    root.display-language-chosen(self.current-index);
+                }
+            }
+        }
+        SettingDivider { }
+        SettingRow {
+            label: @tr("AppearancePage" => "Currency symbol");
+            description: @tr("AppearancePage" => "Shown before resin cost estimates.");
+            currency-symbol-input := LineEdit {
+                width: 80px;
+                text: root.currency-symbol-text;
+                accessible-label: @tr("AppearancePage" => "Currency symbol");
+                edited(t) => {
+                    root.currency-symbol-text = t;
+                    root.currency-symbol-edited(t);
+                }
+            }
+        }
+    }
+
+    // External updates (loading preferences on window open) must be
+    // pushed back into the LineEdit explicitly: its text binding
+    // breaks the first time the user types.
+    changed currency-symbol-text => {
+        currency-symbol-input.text = root.currency-symbol-text;
+    }
+}

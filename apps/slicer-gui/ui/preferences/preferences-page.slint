@@ -1,0 +1,111 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ShellTheme } from "../theme.slint";
+
+// A Preferences page (R112): the page title with a one-line summary under
+// it, then the page's content. Settings pages group their rows in a
+// `SettingsCard` of `SettingRow`s (label and description on the left,
+// the control on the right), as Orca, Bambu Studio and the system
+// settings apps do.
+export component PreferencesPage inherits VerticalLayout {
+    in property <string> page-title;
+    in property <string> subtitle;
+    // A page with a list or gallery sets this, so that child (with its
+    // `vertical-stretch`) takes the height left; short pages of fields
+    // leave it off and their rows stay packed at the top.
+    in property <bool> stretch-content: false;
+
+    padding: 24px;
+    padding-top: 20px;
+    spacing: 14px;
+    alignment: root.stretch-content ? LayoutAlignment.stretch : LayoutAlignment.start;
+
+    accessible-role: tab-panel;
+    accessible-label: root.page-title;
+
+    VerticalLayout {
+        spacing: 4px;
+        vertical-stretch: 0;
+        Text {
+            text: root.page-title;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: ShellTheme.text;
+            // Title is already exposed as the panel's accessible-label; avoid
+            // a duplicate node in the a11y tree.
+            accessible-role: none;
+        }
+        if root.subtitle != "": Text {
+            text: root.subtitle;
+            font-size: 0.85rem;
+            color: ShellTheme.muted;
+            wrap: word-wrap;
+        }
+    }
+
+    @children
+}
+
+// A rounded panel holding a group of settings rows.
+export component SettingsCard inherits Rectangle {
+    in property <string> heading;
+    background: ShellTheme.panel;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: ShellTheme.border;
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        if root.heading != "": Text {
+            text: root.heading;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: ShellTheme.muted;
+            height: 30px;
+            vertical-alignment: bottom;
+        }
+        @children
+    }
+}
+
+// One setting: its name and a short description on the left, the control
+// (the row's child) on the right.
+export component SettingRow inherits HorizontalLayout {
+    in property <string> label;
+    in property <string> description;
+    min-height: 56px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    spacing: 16px;
+    VerticalLayout {
+        horizontal-stretch: 1;
+        alignment: center;
+        spacing: 2px;
+        Text {
+            text: root.label;
+            font-size: 0.95rem;
+            color: ShellTheme.text;
+            // The control carries this caption as its accessible label.
+            accessible-role: none;
+        }
+        if root.description != "": Text {
+            text: root.description;
+            font-size: 0.8rem;
+            color: ShellTheme.muted;
+            wrap: word-wrap;
+            accessible-role: none;
+        }
+    }
+    VerticalLayout {
+        alignment: center;
+        @children
+    }
+}
+
+// The line between two rows of a card.
+export component SettingDivider inherits Rectangle {
+    height: 1px;
+    background: ShellTheme.border;
+}

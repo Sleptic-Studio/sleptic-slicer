@@ -1,0 +1,177 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// The Preferences window's side bar (R112): a heading, one tab per section
+// with its icon, the open one in a rounded blue tint, and a footnote at the
+// bottom (the bar's children). The keyboard moves a highlight with the
+// arrows and Home / End; Enter, or Space on release, opens it.
+import { ShellTheme } from "theme.slint";
+
+// One section's tab.
+component PreferenceSectionTab inherits Rectangle {
+    in property <int> section-position;
+    in property <bool> tab-active;
+    in property <bool> keyboard-highlighted;
+    in property <image> icon;
+    in-out property <string> text <=> caption.text;
+    callback clicked <=> hit-area.clicked;
+
+    height: 36px;
+    border-radius: 6px;
+    background: root.tab-active ? ShellTheme.accent.with-alpha(0.12) : hit-area.has-hover ? ShellTheme.field : transparent;
+    // The keyboard highlight: a thin accent outline.
+    border-width: root.keyboard-highlighted ? 1px : 0px;
+    border-color: ShellTheme.accent;
+
+    accessible-role: tab;
+    accessible-label: root.text;
+    accessible-item-index: root.section-position;
+    accessible-item-selectable: true;
+    accessible-item-selected: root.tab-active;
+    accessible-action-default => {
+        self.clicked();
+    }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+
+        if root.icon.width > 0: VerticalLayout {
+            alignment: center;
+            Image {
+                source: root.icon;
+                width: 18px;
+                height: 18px;
+                colorize: root.tab-active ? ShellTheme.accent : ShellTheme.muted;
+            }
+        }
+
+        caption := Text {
+            vertical-alignment: center;
+            font-size: 0.95rem;
+            font-weight: root.tab-active ? 600 : 400;
+            color: root.tab-active ? ShellTheme.accent : ShellTheme.text;
+            overflow: elide;
+            // The tab itself is labelled.
+            accessible-role: none;
+        }
+    }
+
+    hit-area := TouchArea {
+        width: 100%;
+        height: 100%;
+        mouse-cursor: pointer;
+    }
+}
+
+export component PreferenceNavigationRail inherits Rectangle {
+    in property <[string]> section-labels: [];
+    in property <[image]> icons: [];
+    in property <string> title;
+    in property <string> heading;
+    in-out property <int> current-item: 0;
+    // The tab the keyboard highlight is on while the bar has the focus;
+    // -1 when it does not.
+    out property <int> current-focused: keys.has-focus ? keys.focused-tab : -1;
+
+    width: 220px;
+    background: ShellTheme.panel;
+    forward-focus: keys;
+
+    // The highlight follows the open tab, so focusing the bar again after a
+    // click carries on from there rather than from the first tab.
+    changed current-item => {
+        keys.focused-tab = root.current-item;
+    }
+
+    // The line along the bar's right edge.
+    Rectangle {
+        x: parent.width - 1px;
+        width: 1px;
+        background: ShellTheme.border;
+    }
+
+    VerticalLayout {
+        padding: 12px;
+        padding-top: 18px;
+        spacing: 2px;
+
+        if root.heading != "": Text {
+            text: root.heading;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: ShellTheme.text;
+            accessible-role: none;
+        }
+        if root.heading != "": Rectangle {
+            height: 12px;
+        }
+
+        VerticalLayout {
+            alignment: start;
+            spacing: 2px;
+            vertical-stretch: 0;
+            accessible-role: tab-list;
+            accessible-label: root.title;
+            accessible-item-count: root.section-labels.length;
+            accessible-delegate-focus: root.current-focused >= 0 ? root.current-focused : root.current-item;
+
+            // Takes the keys; it has no size, so clicks reach the tabs.
+            keys := FocusScope {
+                property <int> focused-tab: root.current-item;
+                x: 0;
+                width: 0;
+                height: 0;
+
+                key-pressed(event) => {
+                    if event.text == "\n" {
+                        root.current-item = root.current-focused;
+                        return accept;
+                    }
+                    let last = root.section-labels.length - 1;
+                    // Where the key moves the highlight; -2 for keys it leaves alone.
+                    let target = event.text == Key.UpArrow ? Math.max(self.focused-tab - 1, 0)
+                        : event.text == Key.DownArrow ? Math.min(self.focused-tab + 1, last)
+                        : event.text == Key.Home ? 0
+                        : event.text == Key.End ? last
+                        : -2;
+                    if target == -2 {
+                        return reject;
+                    }
+                    self.focused-tab = target;
+                    return accept;
+                }
+
+                // Space opens on release, as buttons do.
+                key-released(event) => {
+                    if event.text != " " {
+                        return reject;
+                    }
+                    root.current-item = root.current-focused;
+                    return accept;
+                }
+            }
+
+            for section[position] in root.section-labels: PreferenceSectionTab {
+                section-position: position;
+                text: section;
+                icon: position < root.icons.length ? root.icons[position] : @image-url("");
+                tab-active: position == root.current-item;
+                keyboard-highlighted: position == root.current-focused;
+                clicked => {
+                    root.current-item = position;
+                }
+            }
+        }
+
+        // Pushes the footnote to the bottom.
+        Rectangle {
+            vertical-stretch: 1;
+        }
+
+        VerticalLayout {
+            spacing: 4px;
+            @children
+        }
+    }
+}

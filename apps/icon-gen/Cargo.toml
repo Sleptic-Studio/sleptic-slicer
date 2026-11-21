@@ -1,0 +1,14 @@
+[package]
+name = "sc-icon-gen"
+version = "0.0.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+publish = false
+description = "Generate the Windows .ico from the shared SVG logo."
+
+[lints]
+workspace = true
+
+[dependencies]
+resvg = { version = "0.47", default-features = false }
+ico = "0.5"

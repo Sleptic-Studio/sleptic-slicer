@@ -1,0 +1,34 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { CheckBox, ScrollView, Button } from "std-widgets.slint";
+import { ThemedWindow } from "themed-window.slint";
+import { ShellTheme } from "theme.slint";
+import { PrimaryButton } from "primary-button.slint";
+
+export component LicenseDialog inherits ThemedWindow {
+    title: @tr("License acceptance");
+    preferred-width: 700px; preferred-height: 600px;
+    min-width: 450px; min-height: 350px;
+    background: ShellTheme.panel;
+    in property <string> license-text;
+    callback accept-requested();
+    callback quit-requested();
+    VerticalLayout {
+        padding: 20px; spacing: 12px;
+        ScrollView {
+            vertical-stretch: 1;
+            viewport-width: self.visible-width;
+            viewport-height: license-body.preferred-height;
+            license-body := TextInput {
+                width: parent.width; text: root.license-text; read-only: true;
+                single-line: false; wrap: word-wrap; color: ShellTheme.text;
+            }
+        }
+        consent := CheckBox { text: @tr("I have read and accept the license"); }
+        HorizontalLayout {
+            alignment: end; spacing: 10px;
+            Button { text: @tr("Quit"); clicked => { root.quit-requested(); } }
+            PrimaryButton { text: @tr("Accept"); enabled: consent.checked; clicked => { root.accept-requested(); } }
+        }
+    }
+}

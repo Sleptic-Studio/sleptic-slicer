@@ -1,0 +1,70 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ThemedWindow } from "themed-window.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { DialogFooter } from "dialog-parts.slint";
+import { EscapeScope } from "form-parts.slint";
+import { MessageBody } from "message-body.slint";
+
+// A message with an information badge, laid out like the error dialog
+// (R112): heading, message, optional details, OK in the footer band.
+export component InfoDialog inherits ThemedWindow {
+    title: @tr("Information");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.panel;
+    // As tall as the text needs, no taller.
+    min-width: 480px;
+    preferred-width: 480px;
+    min-height: body.preferred-height;
+    preferred-height: body.preferred-height;
+    max-height: body.preferred-height;
+    // OK has the focus, so Enter closes the dialog.
+    forward-focus: close-button;
+
+    in-out property <ThemePreference> theme: ThemePreference.System;
+    window-theme: root.theme;
+
+    in property <string> headline: @tr("Information");
+    in property <string> body-text: "";
+    in property <string> more-text: "";
+    // Short, plain-worded details show as text under the message; long or
+    // technical ones stay in the details box. Rust decides
+    // (`error_dialog::inline_details`).
+    in property <bool> details-inline: false;
+
+    callback done-clicked();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => {
+            root.done-clicked();
+        }
+
+        body := VerticalLayout {
+            alignment: start;
+
+            MessageBody {
+                badge-kind: 2;
+                badge-label: @tr("InfoDialog" => "Information");
+                heading: root.headline;
+                message: root.body-text;
+                details: root.more-text;
+                details-inline: root.details-inline;
+                show-details-label: @tr("Show details");
+                hide-details-label: @tr("Hide details");
+            }
+
+            DialogFooter {
+                close-button := PrimaryButton {
+                    text: @tr("OK");
+                    clicked => {
+                        root.done-clicked();
+                    }
+                }
+            }
+        }
+    }
+}

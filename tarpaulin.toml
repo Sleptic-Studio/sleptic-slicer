@@ -1,0 +1,20 @@
+# cargo-tarpaulin settings, read by scripts/coverage.py (the [default] profile).
+[default]
+workspace = true
+# The CLI's integration tests run its binary as a child process; following
+# exec lets those lines count. The LLVM engine copes with that, ptrace crashes.
+follow-exec = true
+engine = "Llvm"
+# Instrumented builds (`--cfg=tarpaulin`) get their own target dir so they do
+# not throw away the normal build cache, and are kept between runs.
+target-dir = "target/tarpaulin"
+skip-clean = true
+# coverage.py reads the stdout log for its table; the JSON is for tools.
+output-dir = "target/coverage"
+out = ["Stdout", "Json"]
+# Generated bindings and the compiled Slint UI are not hand-written code.
+exclude-files = [
+    "target/*/build/*-*/out/*.rs",
+    "target/*/build/skia-bindings-*/out/skia/bindings.rs",
+    "target/package/*",
+]

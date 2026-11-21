@@ -1,0 +1,572 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { Palette } from "std-widgets.slint";
+import { SecondaryButton as Button } from "secondary-button.slint";
+import { ShellTheme } from "theme.slint";
+
+// The six views along an axis, which the view keys and the view cube ask
+// the camera for.
+export enum AxisView {
+    Front,
+    Back,
+    Right,
+    Left,
+    Top,
+    Bottom,
+}
+
+// Which modifier keys were down with a pointer event. Every pointer
+// callback carries them, so the drag code reads Shift and the others as
+// the pointer moves (`moved` has no modifiers, so moves go through
+// `pointer-event` instead).
+export struct PointerModifiers {
+    shift: bool,
+    control: bool,
+    alt: bool,
+    meta: bool,
+}
+
+// `separator`: draw a divider above this entry (starts a new group).
+export struct ContextEntry { title: string, action: int, enabled: bool, separator: bool }
+
+component ContextRow inherits Rectangle {
+    in property <string> text;
+    in property <bool> enabled: true;
+    in property <bool> active: false;
+    in property <bool> separator: false;
+    callback activated();
+    height: root.separator ? 37px : 28px;
+    accessible-role: button;
+    accessible-label: root.text;
+    if root.separator: Rectangle { x: 6px; y: 4px; width: parent.width - 12px; height: 1px; background: ShellTheme.border; }
+    Rectangle {
+        y: parent.height - 28px; height: 28px; border-radius: 4px;
+        background: root.enabled && (touch.has-hover || root.active) ? ShellTheme.field : transparent;
+        Text { x: 10px; width: parent.width - 20px; text: root.text; color: root.enabled ? ShellTheme.text : ShellTheme.dim; vertical-alignment: center; font-size: 13px; }
+        touch := TouchArea { enabled: root.enabled; clicked => { root.activated(); } }
+    }
+}
+
+export component MeshViewer inherits Rectangle {
+    // The cursor is over a clickable drawing on the canvas (plate tile).
+    in property <bool> over-control: false;
+    in property <[int]> plate-ids: [1];
+    in-out property <bool> context-plates: false;
+    in property <image> frame-image;
+    in property <string> empty-hint: "";
+    // Whether a scene is currently loaded. Drives the placeholder
+    // hint text and its accessible-label. Deliberately NOT derived
+    // from `rendering.width == 0`: the renderer produces a real,
+    // non-zero-sized frame the instant it draws the empty build-
+    // volume envelope, well before any model is loaded, so that
+    // check only ever caught the brief pre-first-frame instant, not
+    // the actual "no model loaded" state a new user sees.
+    in property <bool> has-scene: false;
+
+    // The camera drag under way: 0 none, 1 orbiting, 2 panning.
+    property <int> gesture-kind: 0;
+    // The left button is down. Kept apart from `active-gesture`, so a
+    // right-drag pan still works while the left button is held.
+    property <bool> primary-held: false;
+    // Where the pointer was at the last drag step.
+    property <length> drag-from-x;
+    property <length> drag-from-y;
+
+    // Fired by the empty-state "Open File…" button. Only shown while
+    // `!has-scene`, so there is no ambiguity about which file dialog
+    // this should open -- the same one File > Open / Ctrl+O does.
+    callback open-file-requested();
+    callback view-size-changed(length, length);
+    callback orbit-dragged(length, length);
+    callback pan-dragged(length, length);
+    callback wheel-zoom(length, length, length);
+    callback fit-view-asked();
+    // "?" opens the keyboard shortcuts list (as in Orca Slicer).
+    callback shortcuts-help-requested();
+    callback axis-view-asked(AxisView);
+    // The left button: pressed, moved (with no camera drag running, also
+    // when no button is down, for hover) and released. Rust tells a click
+    // from a drag by how far the pointer went, which is why these are
+    // finer than a `clicked`.
+    // Returns true when the press grabbed a gizmo handle; a left press
+    // that did not is a camera orbit (left-drag orbits, right-drag pans).
+    callback viewport-pointer-down(length, length, PointerModifiers) -> bool;
+    callback pointer-moved(length, length, PointerModifiers);
+    callback pointer-released(length, length, PointerModifiers);
+    callback selection-dropped();
+    // The keyboard gizmo. T, R and S put Move, Rotate or Scale on the
+    // keys; while one is on (Rust mirrors that in
+    // `gizmo-keyboard-focus-active`) the arrows and Page Up / Down drive
+    // it, held, instead of the camera.
+    in property <bool> gizmo-keys-on: false;
+    callback move-tool-key();
+    callback rotate-tool-key();
+    callback scale-tool-key();
+    // The key as axis and direction: 0 +X, 1 -X, 2 +Y, 3 -Y, 4 +Z, 5 -Z.
+    callback arrow-key-down(int);
+    callback arrow-key-up(int);
+    // Tab picks the next part (+1), Shift+Tab the one before (-1). With
+    // nothing to pick (`can-cycle-selection` off) Tab is left to move the
+    // keyboard focus out of the view.
+    in property <bool> cycle-allowed: false;
+    callback step-selection(int);
+    // Ctrl+C / Ctrl+V (Command on a Mac). Sent whatever is selected:
+    // Rust decides whether there is anything to copy or paste.
+    callback copy-key();
+    callback paste-key();
+    // The pointer left the view: a paste then lands in the middle of the
+    // view rather than where the pointer was last seen.
+    callback pointer-left-view();
+
+    // The right-click menu. Rust decides whether a right press and
+    // release was a click (the menu) or a drag (the camera), and for a
+    // click calls `show-context-menu` with the pixel and what the menu may
+    // offer. A row fires its action; a click elsewhere closes the menu.
+    out property <length> context-anchor-x: 0px;
+    out property <length> context-anchor-y: 0px;
+    property <bool> menu-copy-on: false;
+    property <bool> menu-paste-on: false;
+    property <bool> menu-delete-on: false;
+    in property <bool> context-has-selection: false;
+    in property <bool> context-editable: true;
+    in property <bool> context-is-hollow: false;
+    callback context-action(int);
+    out property <bool> context-visible: false;
+    out property <bool> context-mirror: false;
+    out property <int> context-index: 0;
+    // Grouped like Orca's object menu: edit / place / prepare / export.
+    // The Move to plate / Mirror submenus are placed by row index below:
+    // keep those offsets in step when reordering.
+    property <[ContextEntry]> object-entries: [
+        { title: @tr("Copy"), action: 10, enabled: root.context-editable },
+        { title: @tr("Duplicate (Ctrl+D)"), action: 9, enabled: root.context-editable },
+        { title: @tr("Delete"), action: 8, enabled: root.context-editable },
+        { title: @tr("Center on plate"), action: 11, enabled: root.context-editable, separator: true },
+        { title: @tr("Drop to plate"), action: 12, enabled: root.context-editable },
+        { title: @tr("Move to plate >"), action: -2, enabled: root.context-editable },
+        { title: @tr("Mirror") + " >", action: -1, enabled: root.context-editable },
+        { title: @tr("Reset transform"), action: 20, enabled: root.context-editable },
+        { title: @tr("Auto orient"), action: 16, enabled: !root.context-plate-locked && root.context-editable, separator: true },
+        { title: @tr("Auto supports for this object"), action: 19, enabled: root.context-editable },
+        { title: @tr("Hollow"), action: 17, enabled: root.context-editable },
+        { title: @tr("Remove hollow"), action: 18, enabled: root.context-editable && root.context-is-hollow },
+        { title: @tr("Simplify..."), action: 26, enabled: root.context-editable && !root.context-plate-locked },
+        { title: @tr("Fill plate with copies"), action: 4, enabled: !root.context-plate-locked && root.context-editable },
+        { title: @tr("Export as STL..."), action: 21, enabled: root.context-editable, separator: true },
+    ];
+    in property <bool> context-plate-locked: false;
+    in property <bool> context-on-plate: true;
+    property <[ContextEntry]> global-entries: [
+        { title: @tr("Add model..."), action: 0, enabled: true },
+        { title: @tr("Paste"), action: 5, enabled: root.menu-paste-on && root.context-editable },
+        { title: @tr("Select all"), action: 1, enabled: root.has-scene },
+        { title: @tr("Frame view"), action: 7, enabled: true, separator: true },
+        { title: @tr("Reset view"), action: 23, enabled: true },
+        { title: @tr("Preferences..."), action: 24, enabled: true, separator: true },
+    ];
+    property <[ContextEntry]> plate-entries: [
+        { title: @tr("Add model..."), action: 0, enabled: true },
+        { title: @tr("Add plate"), action: 25, enabled: root.context-editable },
+        { title: @tr("Select all on plate"), action: 1, enabled: root.has-scene, separator: true },
+        { title: @tr("Arrange plate (A)"), action: 2, enabled: !root.context-plate-locked && root.has-scene && root.context-editable },
+        { title: @tr("Auto orient plate"), action: 3, enabled: !root.context-plate-locked && root.has-scene && root.context-editable },
+        { title: @tr("Fill plate with selected"), action: 4, enabled: !root.context-plate-locked && root.context-has-selection && root.context-editable },
+        { title: @tr("Clear plate"), action: 6, enabled: root.has-scene && root.context-editable },
+        { title: @tr("Plate settings..."), action: 22, enabled: true, separator: true },
+    ];
+    out property <[ContextEntry]> context-entries: root.menu-copy-on ? root.object-entries : root.context-on-plate ? root.plate-entries : root.global-entries;
+    callback activate-context(int);
+    activate-context(action) => {
+        if (action == -2) { root.context-plates = !root.context-plates; }
+        else if (action == -1) { root.context-mirror = !root.context-mirror; }
+        else {
+            root.context-visible = false;
+            if (action == 5) { root.menu-paste-chosen(root.context-anchor-x, root.context-anchor-y); }
+            else { root.context-action(action); }
+        }
+    }
+    callback pop-view-menu(length, length, bool, bool, bool);
+    pop-view-menu(x, y, copy, paste, del) => {
+        root.context-anchor-x = x;
+        root.context-anchor-y = y;
+        root.menu-copy-on = copy;
+        root.menu-paste-on = paste;
+        root.menu-delete-on = del;
+        root.context-visible = true;
+        root.context-mirror = false;
+        root.context-plates = false;
+        root.context-index = 0;
+        fs.focus();
+    }
+    callback menu-copy-chosen();
+    // Paste from the menu carries the pixel the menu was opened at: the
+    // copy goes there, not where the pointer is when the row is clicked.
+    callback menu-paste-chosen(length, length);
+    // The Delete and Backspace keys, the menu row and Edit > Delete all
+    // come here: deleting needs nothing but the selection.
+    callback delete-key();
+    // 5 switches perspective / orthographic (Blender's numpad 5).
+    callback projection-toggle-requested();
+    // The right button's press and release positions, from which Rust
+    // tells a menu click from a camera drag (the drag itself is
+    // `active-gesture` here).
+    callback secondary-pressed(length, length);
+    callback secondary-released(length, length);
+
+    accessible-role: image;
+    accessible-label: (!root.has-scene || root.frame-image.width == 0 || root.frame-image.height == 0)
+        ? (root.empty-hint != "" ? root.empty-hint : @tr("MeshViewer" => "3D model viewer, empty"))
+        : @tr("MeshViewer" => "3D model viewer");
+    accessible-description: @tr("MeshViewer" => "Right-click drag or arrow keys to rotate. Shift with right-click drag, middle-click drag, or Shift and arrow keys to pan. Scroll, Plus/Minus, or Page Up/Down to zoom. Press F or Home to frame the model. Press 1, 3, or 7 for front, right, or top views; hold Control for back, left, or bottom.");
+
+    // The view's own dark background in either theme (as CAD tools keep
+    // it), so the grey parts read the same; only its border follows the
+    // theme.
+    background: ShellTheme.viewport;
+    border-color: Palette.border;
+    border-width: 1px;
+
+    changed width => {
+        root.view-size-changed(self.width, self.height);
+    }
+    changed height => {
+        root.view-size-changed(self.width, self.height);
+    }
+
+    // An arrow key: a step of the keyboard gizmo while it is on, else a
+    // camera pan (with Shift) or turn. `dx` and `dy` are -1, 0 or 1.
+    function arrow-key(gizmo-code: int, dx: float, dy: float, shift: bool) {
+        if root.gizmo-keys-on {
+            root.arrow-key-down(gizmo-code);
+        } else if shift {
+            root.pan-dragged(30px * dx, 30px * dy);
+        } else {
+            root.orbit-dragged(20px * dx, 20px * dy);
+        }
+    }
+
+    // Page Up / Down: the gizmo's Z step while it is on, else a zoom
+    // aimed at the middle of the view (`direction` 1 in, -1 out).
+    function zoom-key(gizmo-code: int, direction: float) {
+        if root.gizmo-keys-on {
+            root.arrow-key-down(gizmo-code);
+        } else {
+            root.wheel-zoom(120px * direction, root.width / 2, root.height / 2);
+        }
+    }
+
+    // The gizmo code of a key that can be held to drive it; -1 for others.
+    pure function held-arrow-code(key: string) -> int {
+        return key == Key.RightArrow ? 0
+            : key == Key.LeftArrow ? 1
+            : key == Key.UpArrow ? 2
+            : key == Key.DownArrow ? 3
+            : key == Key.PageUp ? 4
+            : key == Key.PageDown ? 5
+            : -1;
+    }
+
+    pure function pointer-keys(keys: KeyboardModifiers) -> PointerModifiers {
+        return { shift: keys.shift, control: keys.control, alt: keys.alt, meta: keys.meta };
+    }
+
+    // The rendered frame fills the view; the view itself speaks for it to
+    // screen readers.
+    Image {
+        source: root.frame-image;
+        image-fit: fill;
+        width: parent.width;
+        height: parent.height;
+        accessible-role: none;
+    }
+
+    fs := FocusScope {
+        width: parent.width;
+        height: parent.height;
+        accessible-role: none;
+
+        key-pressed(event) => {
+            // The open right-click menu takes the keys first.
+            if (root.context-visible) {
+                if (event.text == Key.Escape) { if (root.context-mirror) { root.context-mirror = false;
+        root.context-plates = false; } else { root.context-visible = false; } return accept; }
+                if (root.context-mirror) {
+                    if (event.text == "x" || event.text == "X") { root.activate-context(13); return accept; }
+                    if (event.text == "y" || event.text == "Y") { root.activate-context(14); return accept; }
+                    if (event.text == "z" || event.text == "Z") { root.activate-context(15); return accept; }
+                }
+                if (event.text == Key.DownArrow) { root.context-index = Math.mod(root.context-index + 1, root.context-entries.length); return accept; }
+                if (event.text == Key.UpArrow) { root.context-index = Math.mod(root.context-index + root.context-entries.length - 1, root.context-entries.length); return accept; }
+                if (event.text == Key.Return && root.context-entries[root.context-index].enabled) { root.activate-context(root.context-entries[root.context-index].action); return accept; }
+            }
+            if (event.modifiers.control && (event.text == "a" || event.text == "A")) { root.context-action(1); return accept; }
+            if (!event.modifiers.control && (event.text == "a" || event.text == "A")) { root.context-action(2); return accept; }
+            if event.text == Key.Escape {
+                root.selection-dropped();
+                return accept;
+            }
+            // Home, F and 0 frame the scene (0 is Orca's "default view").
+            if event.text == Key.Home || event.text == "f" || event.text == "F" || event.text == "0" {
+                root.fit-view-asked();
+                return accept;
+            }
+            if event.text == "?" {
+                root.shortcuts-help-requested();
+                return accept;
+            }
+            // T, R, S: the keyboard gizmo's tool (Rust ignores them with
+            // nothing selected).
+            if event.text == "t" || event.text == "T" {
+                root.move-tool-key();
+                return accept;
+            }
+            if event.text == "r" || event.text == "R" {
+                root.rotate-tool-key();
+                return accept;
+            }
+            if event.text == "s" || event.text == "S" {
+                root.scale-tool-key();
+                return accept;
+            }
+            // The number-pad views: 1 front, 3 right, 7 top; Control turns
+            // each to the opposite side, as in Blender. 5 switches between
+            // perspective and orthographic.
+            if event.text == "1" || event.text == "3" || event.text == "7" {
+                let flip = event.modifiers.control;
+                root.axis-view-asked(event.text == "1" ? (flip ? AxisView.Back : AxisView.Front)
+                    : event.text == "3" ? (flip ? AxisView.Left : AxisView.Right)
+                    : (flip ? AxisView.Bottom : AxisView.Top));
+                return accept;
+            }
+            if event.text == "5" {
+                root.projection-toggle-requested();
+                return accept;
+            }
+            if event.text == Key.LeftArrow || event.text == Key.RightArrow || event.text == Key.UpArrow || event.text == Key.DownArrow {
+                let right = event.text == Key.RightArrow ? 1 : event.text == Key.LeftArrow ? -1 : 0;
+                let down = event.text == Key.DownArrow ? 1 : event.text == Key.UpArrow ? -1 : 0;
+                root.arrow-key(root.held-arrow-code(event.text), right, down, event.modifiers.shift);
+                return accept;
+            }
+            if event.text == Key.PageUp || event.text == Key.PageDown {
+                root.zoom-key(root.held-arrow-code(event.text), event.text == Key.PageUp ? 1 : -1);
+                return accept;
+            }
+            // Plus, = and minus always zoom: they are not gizmo keys.
+            if event.text == "+" || event.text == "=" || event.text == "-" {
+                let direction = event.text == "-" ? -1 : 1;
+                root.wheel-zoom(120px * direction, root.width / 2, root.height / 2);
+                return accept;
+            }
+            // Copy and paste need Control (Command on a Mac); plain C and V
+            // are left free.
+            if (event.modifiers.control || event.modifiers.meta) && (event.text == "c" || event.text == "C") {
+                root.copy-key();
+                return accept;
+            }
+            if (event.modifiers.control || event.modifiers.meta) && (event.text == "v" || event.text == "V") {
+                root.paste-key();
+                return accept;
+            }
+            // Tab and Shift+Tab pick through the parts when there are any;
+            // otherwise Tab moves the focus on. Shift+Tab arrives as
+            // Backtab on X11 and as Tab with Shift elsewhere.
+            if root.cycle-allowed && (event.text == Key.Tab || event.text == Key.Backtab) {
+                root.step-selection(event.text == Key.Backtab || event.modifiers.shift ? -1 : 1);
+                return accept;
+            }
+            // Backspace deletes too, as in Orca and Bambu (and it is the key
+            // labelled "delete" on a Mac). A focused text field gets
+            // Backspace first, so typing never reaches here.
+            if event.text == Key.Delete || event.text == Key.Backspace {
+                root.delete-key();
+                return accept;
+            }
+            return reject;
+        }
+
+        // Only a gizmo key held while the gizmo is on has a release to
+        // report; every other key acts once, on its press.
+        key-released(event) => {
+            let code = root.held-arrow-code(event.text);
+            if !root.gizmo-keys-on || code < 0 {
+                return reject;
+            }
+            root.arrow-key-up(code);
+            return accept;
+        }
+
+        ta := TouchArea {
+            width: parent.width;
+            height: parent.height;
+            // Hand cursor: open hand over the scene, closed hand while panning.
+            mouse-cursor: root.gesture-kind == 2 ? MouseCursor.grabbing : (root.gesture-kind == 1 ? MouseCursor.move : root.over-control ? MouseCursor.pointer : MouseCursor.default);
+
+            changed has-hover => {
+                if !self.has-hover {
+                    root.pointer-left-view();
+                }
+            }
+
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.down {
+                    fs.focus();
+                    root.drag-from-x = self.mouse-x;
+                    root.drag-from-y = self.mouse-y;
+                    if event.button == PointerEventButton.left {
+                        root.primary-held = true;
+                        // Off the gizmo's handles, left-drag orbits (rotate on
+                        // the left button, pan on the right, as in Orca and
+                        // Bambu); a press and release in place is still a click
+                        // (selection, support placement).
+                        let grabbed-gizmo = root.viewport-pointer-down(self.mouse-x, self.mouse-y, root.pointer-keys(event.modifiers));
+                        if !grabbed-gizmo {
+                            root.gesture-kind = 1;
+                        }
+                    } else if event.button == PointerEventButton.right {
+                        // Right-drag pans; Shift+right-drag orbits.
+                        root.gesture-kind = event.modifiers.shift ? 1 : 2;
+                        root.secondary-pressed(self.mouse-x, self.mouse-y);
+                    } else if event.button == PointerEventButton.middle {
+                        root.gesture-kind = 2;
+                    }
+                } else if event.kind == PointerEventKind.up {
+                    // Only the three buttons that start a drag end one.
+                    if event.button == PointerEventButton.left {
+                        root.primary-held = false;
+                        root.gesture-kind = 0;
+                        root.pointer-released(self.mouse-x, self.mouse-y, root.pointer-keys(event.modifiers));
+                    } else if event.button == PointerEventButton.right {
+                        root.gesture-kind = 0;
+                        root.secondary-released(self.mouse-x, self.mouse-y);
+                    } else if event.button == PointerEventButton.middle {
+                        root.gesture-kind = 0;
+                    }
+                } else if event.kind == PointerEventKind.move && root.gesture-kind == 0 {
+                    // With a camera drag running the moves are the camera's;
+                    // otherwise they go to Rust, held or not (the gizmo drag,
+                    // or the handle under the pointer lighting up). Moves come
+                    // here and not to `moved` for their modifiers.
+                    root.pointer-moved(self.mouse-x, self.mouse-y, root.pointer-keys(event.modifiers));
+                }
+            }
+
+            // A camera drag follows the pointer step by step.
+            moved => {
+                if root.gesture-kind != 0 {
+                    let dx = self.mouse-x - root.drag-from-x;
+                    let dy = self.mouse-y - root.drag-from-y;
+                    if root.gesture-kind == 1 {
+                        root.orbit-dragged(dx, dy);
+                    } else {
+                        root.pan-dragged(dx, dy);
+                    }
+                    root.drag-from-x = self.mouse-x;
+                    root.drag-from-y = self.mouse-y;
+                }
+            }
+
+            scroll-event(event) => {
+                root.wheel-zoom(event.delta-y, self.mouse-x, self.mouse-y);
+                return accept;
+            }
+        }
+    }
+
+    // Empty-state hint + "Open File…" button. Declared AFTER `fs`
+    // (the full-viewport FocusScope carrying the camera-drag
+    // TouchArea) on purpose: a real interactive Button placed BEFORE
+    // it in the tree is visually drawn under `fs`'s own full-size
+    // TouchArea, which silently swallows every click meant for the
+    // button before it ever arrives -- confirmed by hand-testing
+    // against the real running app, not caught by any static review
+    // or by `cargo check`, since Slint compiles either ordering
+    // without complaint. Ordering it last makes it the topmost
+    // element for hit-testing, the same way the floating panels in
+    // main-window.slint already sit above this same viewport.
+    if (!root.has-scene || root.frame-image.width == 0 || root.frame-image.height == 0): VerticalLayout {
+        width: parent.width;
+        height: parent.height;
+        alignment: center;
+        spacing: 16px;
+
+        Text {
+            text: root.empty-hint;
+            color: ShellTheme.dim;
+            horizontal-alignment: center;
+            accessible-role: text;
+            accessible-label: self.text;
+        }
+
+        // One-click way to act on the hint above, instead of only
+        // telling the user which menu/shortcut to go find. Only
+        // meaningful while there is really nothing loaded, same
+        // condition as the hint text itself.
+        HorizontalLayout {
+            alignment: center;
+
+            Button {
+                text: @tr("MeshViewer" => "Open File…");
+                clicked => {
+                    root.open-file-requested();
+                }
+            }
+        }
+    }
+    callback dismiss-context();
+    dismiss-context => { root.context-visible = false; }
+}
+
+// Declared at the top of MainWindow's canvas overlay stack so menus cover
+// the projected plate strip, navigation controls and top toolbar.
+export component CanvasMenuOverlay inherits Rectangle {
+    in property <bool> context-plates;
+    in property <[int]> plate-ids;
+    in property <length> context-anchor-x;
+    in property <length> context-anchor-y;
+    in property <[ContextEntry]> context-entries;
+    in property <int> context-index;
+    in property <bool> context-mirror;
+    callback activate-context(int);
+    callback dismiss-context();
+    Rectangle {
+        width: parent.width; height: parent.height;
+        TouchArea { clicked => { root.dismiss-context(); } }
+        menu-body := Rectangle {
+            x: Math.max(0px, Math.min(root.context-anchor-x, root.width - self.width));
+            y: Math.max(0px, Math.min(root.context-anchor-y, root.height - self.height));
+            width: 260px; height: menu-rows.preferred-height;
+            background: ShellTheme.panel; border-width: 1px; border-color: ShellTheme.border; border-radius: ShellTheme.radius;
+            drop-shadow-blur: 12px; drop-shadow-offset-y: 4px; drop-shadow-color: #00000040;
+            menu-rows := VerticalLayout { padding: 4px; spacing: 0px;
+                for entry[index] in root.context-entries: ContextRow {
+                    text: entry.title; enabled: entry.enabled; active: root.context-index == index; separator: entry.separator;
+                    activated => { root.activate-context(entry.action); }
+                }
+            }
+        }
+        if root.context-plates: Rectangle {
+            x: Math.min(menu-body.x + menu-body.width, root.width - self.width);
+            y: Math.min(menu-body.y + 4px + 5 * 28px + 9px, root.height - self.height);
+            width: 140px; height: root.plate-ids.length * 28px + 8px;
+            background: ShellTheme.panel; border-width: 1px; border-color: ShellTheme.border; border-radius: ShellTheme.radius;
+            VerticalLayout { padding: 4px; spacing: 0px;
+                for id[index] in root.plate-ids: ContextRow {
+                    text: @tr("Plate {}", index + 1); activated => { root.activate-context(1000 + id); }
+                }
+            }
+        }
+        if root.context-mirror: Rectangle {
+            x: Math.min(menu-body.x + menu-body.width, root.width - self.width);
+            y: Math.min(menu-body.y + 4px + 6 * 28px + 9px, root.height - self.height);
+            width: 90px; height: 92px;
+            background: ShellTheme.panel; border-width: 1px; border-color: ShellTheme.border; border-radius: ShellTheme.radius;
+            VerticalLayout { padding: 4px; spacing: 0px;
+                ContextRow { text: "X"; activated => { root.activate-context(13); } }
+                ContextRow { text: "Y"; activated => { root.activate-context(14); } }
+                ContextRow { text: "Z"; activated => { root.activate-context(15); } }
+            }
+        }
+    }
+
+}

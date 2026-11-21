@@ -1,0 +1,28 @@
+[package]
+name = "sc-sla-formats"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Writers for SLA-printer file formats and debug per-layer outputs."
+categories = ["rendering::data-formats"]
+keywords = ["3d", "slicer", "resin", "sla"]
+
+[lints]
+workspace = true
+
+[dependencies]
+zip.workspace = true
+sc-3mf.workspace = true
+sc-mesh-core.workspace = true
+sc-mesh-formats.workspace = true
+sc-scene.workspace = true
+sc-sl1cer.workspace = true
+rayon.workspace = true
+
+png = "0.18.1"
+
+[dev-dependencies]
+sc-mesh-fixtures.workspace = true
+
+tempfile = "3.23.0"

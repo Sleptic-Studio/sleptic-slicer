@@ -1,0 +1,284 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ComboBox, LineEdit, ScrollView } from "std-widgets.slint";
+import { ThemedWindow } from "themed-window.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { SecondaryButton } from "secondary-button.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { MotionEditor, MotionField } from "motion-editor.slint";
+import { DialogFooter } from "dialog-parts.slint";
+import { ErrorLine, EscapeScope } from "form-parts.slint";
+export { MotionField } from "motion-editor.slint";
+
+// One named value as Rust formats it; an unset field arrives as the
+// translated "not set", never empty.
+export struct ResinDisplayRow {
+    caption-text: string,
+    display-text: string,
+}
+
+// One card of the viewer (identity, intent, defaults, or a calibration
+// block); the block the default printer would use is emphasised.
+export struct ResinDisplayCard {
+    card-heading: string,
+    is-emphasised: bool,
+    display-rows: [ResinDisplayRow],
+}
+
+// An editable value: its name, and a box on the right. Rust may set the
+// value again after the user typed (another target was picked), and typing
+// breaks the box's binding, so such a value is copied into the box.
+export component ProfileInputRow inherits HorizontalLayout {
+    in property <string> input-caption;
+    in-out property <string> input-content;
+    changed input-content => { entry.text = root.input-content; }
+
+    spacing: 12px;
+    Text {
+        text: root.input-caption;
+        color: ShellTheme.muted;
+        font-size: 0.85rem;
+        vertical-alignment: center;
+        horizontal-stretch: 1;
+    }
+    entry := LineEdit {
+        width: 130px;
+        text: root.input-content;
+        edited(typed) => { root.input-content = typed; }
+    }
+}
+
+// A panel in the Preferences cards' style: a small heading, then rows.
+component Section inherits Rectangle {
+    in property <string> heading;
+    in property <bool> emphasised;
+    background: ShellTheme.panel;
+    border-radius: 8px;
+    border-width: root.emphasised ? 2px : 1px;
+    border-color: root.emphasised ? ShellTheme.accent : ShellTheme.border;
+    height: inner.preferred-height;
+
+    inner := VerticalLayout {
+        padding: 12px;
+        spacing: 6px;
+        Text {
+            text: root.heading;
+            color: root.emphasised ? ShellTheme.accent : ShellTheme.muted;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        @children
+    }
+}
+
+// A value shown, not edited: the name left, the value right.
+component ShownValue inherits HorizontalLayout {
+    in property <ResinDisplayRow> line;
+    spacing: 12px;
+    Text {
+        text: root.line.caption-text;
+        color: ShellTheme.muted;
+        font-size: 0.85rem;
+        horizontal-stretch: 1;
+    }
+    Text {
+        text: root.line.display-text;
+        color: ShellTheme.text;
+        font-size: 0.85rem;
+        horizontal-alignment: right;
+    }
+}
+
+// A resin profile with every section and field, unset ones too. Bundled
+// profiles are read-only. A custom one can also be edited: its defaults
+// (not for an extension, whose defaults come from the profile it extends)
+// and one of its calibration blocks at a time, picked from its own.
+export component ProfileViewDialog inherits ThemedWindow {
+    title: @tr("ProfileViewDialog" => "Resin profile");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.background;
+    preferred-width: 500px;
+    preferred-height: 580px;
+    min-width: 420px;
+    min-height: 320px;
+    forward-focus: close-button;
+
+    in-out property <ThemePreference> viewer-theme: ThemePreference.System;
+    window-theme: root.viewer-theme;
+
+    // The resin's name and the profile's origin, an optional note (such as
+    // "this fork is already saved") and the cards.
+    in property <string> resin-heading;
+    in property <string> viewer-note;
+    in property <[ResinDisplayCard]> profile-cards;
+
+    // What may be edited: anything at all, the defaults (off for an
+    // extension), or only the motion editor of a calibration block.
+    in property <bool> allow-profile-edit: false;
+    in property <bool> allow-defaults-edit: false;
+    in property <bool> motion-only: false;
+    in property <string> editor-error;
+
+    in-out property <string> shrink-x-input;
+    in-out property <string> shrink-y-input;
+    in-out property <string> shrink-z-input;
+    in-out property <string> default-bottom-layers-input;
+    in-out property <string> defaults-price-text;
+    in-out property <string> defaults-support-angle-text;
+
+    // The calibration block being edited and its values.
+    in property <[string]> calibration-target-captions;
+    in-out property <int> selected-calibration-target: -1;
+    in-out property <string> normal-exposure-input;
+    in-out property <string> bottom-exposure-input;
+    in-out property <string> calibration-bottom-layers-input;
+    in-out property <string> lift-distance-text;
+    in-out property <string> lift-speed-text;
+    in-out property <string> retract-speed-text;
+
+    // The motion editor's rows and timeline come from Rust; each value the
+    // timeline depends on asks for it again when it changes.
+    in property <[MotionField]> motion-fields;
+    in property <string> motion-inherited;
+    in property <string> motion-timeline;
+    in property <[float]> motion-phases;
+    callback motion-refresh();
+    callback motion-field-changed(int, string);
+    changed normal-exposure-input => { root.motion-refresh(); }
+    changed lift-distance-text => { root.motion-refresh(); }
+    changed lift-speed-text => { root.motion-refresh(); }
+    changed retract-speed-text => { root.motion-refresh(); }
+
+    callback calibration-target-selected(int);
+    callback profile-save-requested();
+    callback viewer-close-requested();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => { root.viewer-close-requested(); }
+
+        VerticalLayout {
+            VerticalLayout {
+                padding: 20px;
+                padding-bottom: 8px;
+                spacing: 4px;
+                Text {
+                    text: root.resin-heading;
+                    color: ShellTheme.text;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    wrap: word-wrap;
+                }
+                if root.viewer-note != "": Text {
+                    text: root.viewer-note;
+                    color: ShellTheme.muted;
+                    font-size: 0.85rem;
+                    wrap: word-wrap;
+                }
+            }
+
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    alignment: start;
+                    spacing: 10px;
+                    padding-left: 20px;
+                    // Clear of the overlay scrollbar.
+                    padding-right: 16px;
+                    padding-bottom: 12px;
+
+                    for card in root.profile-cards: Section {
+                        heading: card.card-heading;
+                        emphasised: card.is-emphasised;
+                        for line in card.display-rows: ShownValue { line: line; }
+                    }
+
+                    if root.allow-profile-edit && root.allow-defaults-edit: Section {
+                        heading: @tr("ProfileViewDialog" => "Defaults");
+                        ProfileInputRow {
+                            input-caption: @tr("ProfileViewDialog" => "Scale compensation x (%)");
+                            input-content <=> root.shrink-x-input;
+                        }
+                        ProfileInputRow {
+                            input-caption: @tr("ProfileViewDialog" => "Scale compensation y (%)");
+                            input-content <=> root.shrink-y-input;
+                        }
+                        ProfileInputRow {
+                            input-caption: @tr("ProfileViewDialog" => "Scale compensation z (%)");
+                            input-content <=> root.shrink-z-input;
+                        }
+                        ProfileInputRow {
+                            input-caption: @tr("ProfileViewDialog" => "Bottom layer count");
+                            input-content <=> root.default-bottom-layers-input;
+                        }
+                        ProfileInputRow {
+                            input-caption: @tr("ProfileViewDialog" => "Price per liter");
+                            input-content <=> root.defaults-price-text;
+                        }
+                        ProfileInputRow {
+                            input-caption: @tr("ProfileViewDialog" => "Supports overhangs under (deg)");
+                            input-content <=> root.defaults-support-angle-text;
+                        }
+                    }
+
+                    if root.allow-profile-edit && root.calibration-target-captions.length > 0: Section {
+                        heading: @tr("ProfileViewDialog" => "Edit calibration values");
+                        ComboBox {
+                            model: root.calibration-target-captions;
+                            current-index <=> root.selected-calibration-target;
+                            selected => { root.calibration-target-selected(self.current-index); }
+                        }
+                        // With motion only, just the motion editor's rows.
+                        if root.selected-calibration-target >= 0 && !root.motion-only: VerticalLayout {
+                            spacing: 6px;
+                            ProfileInputRow {
+                                input-caption: @tr("ProfileViewDialog" => "Normal exposure (s)");
+                                input-content <=> root.normal-exposure-input;
+                            }
+                            ProfileInputRow {
+                                input-caption: @tr("ProfileViewDialog" => "Bottom exposure (s)");
+                                input-content <=> root.bottom-exposure-input;
+                            }
+                            ProfileInputRow {
+                                input-caption: @tr("ProfileViewDialog" => "Bottom layer count");
+                                input-content <=> root.calibration-bottom-layers-input;
+                            }
+                            ProfileInputRow {
+                                input-caption: @tr("ProfileViewDialog" => "Lift distance (mm)");
+                                input-content <=> root.lift-distance-text;
+                            }
+                            ProfileInputRow {
+                                input-caption: @tr("ProfileViewDialog" => "Lift speed (mm/min)");
+                                input-content <=> root.lift-speed-text;
+                            }
+                            ProfileInputRow {
+                                input-caption: @tr("ProfileViewDialog" => "Retract speed (mm/min)");
+                                input-content <=> root.retract-speed-text;
+                            }
+                        }
+                        if root.selected-calibration-target >= 0: MotionEditor {
+                            fields: root.motion-fields;
+                            timeline: root.motion-timeline;
+                            phases: root.motion-phases;
+                            edited(index, value) => { root.motion-field-changed(index, value); }
+                        }
+                    }
+                }
+            }
+
+            DialogFooter {
+                ErrorLine { text: root.editor-error; }
+                if root.allow-profile-edit: PrimaryButton {
+                    text: @tr("ProfileViewDialog" => "Save");
+                    clicked => { root.profile-save-requested(); }
+                }
+                close-button := SecondaryButton {
+                    text: @tr("ProfileViewDialog" => "Close");
+                    clicked => { root.viewer-close-requested(); }
+                }
+            }
+        }
+    }
+}

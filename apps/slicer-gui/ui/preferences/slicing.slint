@@ -1,0 +1,74 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ShellTheme } from "../theme.slint";
+import { PreferencesPage, SettingsCard, SettingRow } from "./preferences-page.slint";
+
+// A row of joined buttons, one per choice, the chosen one filled: every
+// choice is in view, which suits a few short ones better than a dropdown.
+component ChoiceStrip inherits Rectangle {
+    in property <[string]> choices;
+    in property <string> name;
+    in-out property <int> chosen;
+    callback chose(int);
+
+    height: 30px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: ShellTheme.border;
+    background: ShellTheme.field;
+    accessible-role: list;
+    accessible-label: root.name;
+
+    HorizontalLayout {
+        padding: 2px;
+        spacing: 2px;
+        for choice[at] in root.choices: Rectangle {
+            width: 46px;
+            border-radius: 4px;
+            background: root.chosen == at ? ShellTheme.accent : touch.has-hover ? ShellTheme.panel : transparent;
+            accessible-role: button;
+            accessible-label: choice;
+            accessible-checked: root.chosen == at;
+            accessible-action-default => {
+                root.chosen = at;
+                root.chose(at);
+            }
+            Text {
+                text: choice;
+                color: root.chosen == at ? ShellTheme.accent-text : ShellTheme.text;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+            touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.chosen = at;
+                    root.chose(at);
+                }
+            }
+        }
+    }
+}
+
+export component SlicingPage inherits PreferencesPage {
+    page-title: @tr("PreferencesPage" => "Slicing");
+    subtitle: @tr("PreferencesPage" => "Defaults for how layers are rendered.");
+
+    // The anti-aliasing level by its place in the strip, which is the
+    // order Rust reads (`aa_level.rs`): Off, 2x, 4x, 8x.
+    in-out property <int> current-aa-index: 0;
+    callback aa-level-changed(int);
+
+    SettingsCard {
+        SettingRow {
+            label: @tr("SlicingPage" => "Anti-aliasing");
+            description: @tr("SlicingPage" => "Smooths curved edges in each layer image by blending the edge pixels. Higher levels look smoother but take longer to slice.");
+            ChoiceStrip {
+                name: @tr("SlicingPage" => "Anti-aliasing");
+                choices: [@tr("SlicingPage" => "Off"), @tr("SlicingPage" => "2x"), @tr("SlicingPage" => "4x"), @tr("SlicingPage" => "8x")];
+                chosen <=> root.current-aa-index;
+                chose(level) => { root.aa-level-changed(level); }
+            }
+        }
+    }
+}

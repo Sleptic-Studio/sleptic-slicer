@@ -1,0 +1,60 @@
+# Dependency policy for `cargo deny check` (licences, duplicate and wildcard
+# versions, where crates come from). Advisories need the network; run
+# `cargo deny check advisories` on demand.
+
+[graph]
+all-features = true
+
+[advisories]
+ignore = []
+
+[licenses]
+confidence-threshold = 0.8
+# Permissive licences any dependency may use.
+allow = ["Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "BSL-1.0", "CC0-1.0", "ISC", "MIT", "MPL-2.0", "Unicode-3.0", "Zlib"]
+exceptions = [
+    # Sleptic's own applications.
+    { crate = "sc-slicer-gui", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-slicer-cli", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-profiles-converter", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-icon-gen", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-3mf", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-app-paths", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-mesh-core", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-mesh-fixtures", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-mesh-formats", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-mesh-spatial", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-print-glue", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-print-job", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-print-primitives", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-print-profiles", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-project-formats", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-scene", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-scene-edit", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-sl1cer", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    { crate = "sc-sla-formats", allow = ["LicenseRef-Sleptic-Source-1.0"] },
+    # Slint uses the royalty-free application license; the About window
+    # displays the required AboutSlint attribution.
+    { crate = "slint", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "slint-build", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "slint-macros", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-common", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-compiler", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-core", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-core-macros", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-backend-selector", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-backend-winit", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-renderer-skia", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    { crate = "i-slint-renderer-software", allow = ["LicenseRef-Slint-Royalty-free-2.0"] },
+    # Fuzzing support only.
+    { crate = "libfuzzer-sys", allow = ["NCSA"] },
+]
+
+[bans]
+wildcards = "deny"
+multiple-versions = "warn"
+
+[sources]
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+unknown-registry = "deny"
+unknown-git = "deny"

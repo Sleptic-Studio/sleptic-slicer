@@ -1,0 +1,71 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ThemedWindow } from "themed-window.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { DialogFooter } from "dialog-parts.slint";
+import { EscapeScope } from "form-parts.slint";
+import { MessageBody } from "message-body.slint";
+
+// Tells what failed: the heading, the reason in plain words, the technical
+// details behind a disclosure with a Copy button, and OK in the footer band
+// (R112).
+export component ErrorDialog inherits ThemedWindow {
+    title: @tr("Error");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.panel;
+    // As tall as the text needs, no taller.
+    min-width: 480px;
+    preferred-width: 480px;
+    min-height: body.preferred-height;
+    preferred-height: body.preferred-height;
+    max-height: body.preferred-height;
+    // OK has the focus, so Enter closes the dialog.
+    forward-focus: close-button;
+
+    in-out property <ThemePreference> theme: ThemePreference.System;
+    window-theme: root.theme;
+
+    in property <string> error-heading-text: @tr("An error occurred");
+    in property <string> error-context-text: "";
+    in property <string> error-message-text: "";
+    in property <string> error-details-text: "";
+    // Short, plain-worded details show as text under the message; long or
+    // technical ones stay in the details box. Rust decides
+    // (`error_dialog::inline_details`).
+    in property <bool> details-inline: false;
+
+    callback dismiss-error-requested();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => {
+            root.dismiss-error-requested();
+        }
+
+        body := VerticalLayout {
+            alignment: start;
+
+            MessageBody {
+                badge-kind: 0;
+                badge-label: @tr("ErrorDialog" => "Error");
+                heading: root.error-heading-text;
+                context: root.error-context-text;
+                message: root.error-message-text;
+                details: root.error-details-text;
+                details-inline: root.details-inline;
+            }
+
+            DialogFooter {
+                close-button := PrimaryButton {
+                    text: @tr("OK");
+                    clicked => {
+                        root.dismiss-error-requested();
+                    }
+                }
+            }
+        }
+    }
+}

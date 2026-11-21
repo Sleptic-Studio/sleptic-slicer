@@ -1,0 +1,61 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ThemedWindow } from "themed-window.slint";
+import { SecondaryButton as Button } from "secondary-button.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { DialogFooter } from "dialog-parts.slint";
+import { EscapeScope } from "form-parts.slint";
+import { MessageBody } from "message-body.slint";
+
+// Slice was pressed while the slice already held came from other geometry
+// or settings. It looks like the app's other message dialogs (a warning
+// badge this time) and only reports the answer: re-slice, replacing what
+// is held, or keep it. Cancel has the focus, so Enter keeps the slice.
+export component SliceOverwriteDialog inherits ThemedWindow {
+    title: @tr("SliceOverwriteDialog" => "Re-slice");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.panel;
+    preferred-width: 460px;
+    min-width: 420px;
+    // Shrinks no further than the text allows (at large text sizes the
+    // preferred height would be too tall a minimum).
+    min-height: body.min-height;
+    preferred-height: body.preferred-height;
+    forward-focus: keep;
+
+    in-out property <ThemePreference> theme: ThemePreference.System;
+    window-theme: root.theme;
+
+    callback reslice-approved();
+    callback reslice-dismissed();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => { root.reslice-dismissed(); }
+
+        body := VerticalLayout {
+            alignment: start;
+
+            MessageBody {
+                badge-kind: 1;
+                badge-label: @tr("SliceOverwriteDialog" => "Warning");
+                heading: @tr("SliceOverwriteDialog" => "Re-slice this scene?");
+                message: @tr("SliceOverwriteDialog" => "The geometry or the print settings changed since the last slice. Re-slicing replaces the slice data you already have.");
+            }
+
+            DialogFooter {
+                keep := Button {
+                    text: @tr("SliceOverwriteDialog" => "Cancel");
+                    clicked => { root.reslice-dismissed(); }
+                }
+                PrimaryButton {
+                    text: @tr("SliceOverwriteDialog" => "Re-slice");
+                    clicked => { root.reslice-approved(); }
+                }
+            }
+        }
+    }
+}

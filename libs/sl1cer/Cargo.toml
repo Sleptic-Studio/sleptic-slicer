@@ -1,0 +1,25 @@
+[package]
+name = "sc-sl1cer"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Slicing engine for resin 3d printers, built on sc-mesh-core"
+categories = ["algorithms"]
+keywords = ["3d", "slicer", "resin", "sla"]
+
+[lints]
+workspace = true
+
+[dependencies]
+i_overlay.workspace = true
+rayon.workspace = true
+
+sc-mesh-core.workspace = true
+sc-print-primitives.workspace = true
+sc-scene.workspace = true
+
+[dev-dependencies]
+sc-mesh-fixtures.workspace = true
+
+proptest.workspace = true

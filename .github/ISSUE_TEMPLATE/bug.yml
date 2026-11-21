@@ -1,0 +1,36 @@
+name: Bug report
+description: Something in the slicer does not work or prints wrong
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, the model and settings used, and what you saw.
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+    validations:
+      required: true
+  - type: input
+    id: printer
+    attributes:
+      label: Printer and resin profile
+      placeholder: anycubic-photon-mono-m7-pro / standard-405
+  - type: input
+    id: layer
+    attributes:
+      label: Layer or height (if it shows in the layer preview)
+      placeholder: layer 463 / 23.15 mm
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: R85 (c4a91cf)

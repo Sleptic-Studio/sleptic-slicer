@@ -1,0 +1,16 @@
+[package]
+name = "sc-scene-edit"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Reversible scene mutations and portable scene snapshots"
+categories = ["rendering::data-formats"]
+keywords = ["3d", "mesh", "scene", "undo"]
+
+[lints]
+workspace = true
+
+[dependencies]
+sc-mesh-core.workspace = true
+sc-scene.workspace = true

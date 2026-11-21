@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.sleptic.slicer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary</project_license>
+  <url type="help">https://github.com/Sleptic-Studio/sleptic-slicer/blob/main/LICENSE.md</url>
+  <name>Sleptic Slicer</name>
+  <summary>Open source slicer for resin 3D printers</summary>
+  <description>
+    <p>
+      Sleptic Slicer prepares models for resin (MSLA) 3D printers: it repairs
+      and orients them, generates supports, slices them into layers and
+      exports a job the printer can run.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.sleptic.slicer.desktop</launchable>
+  <provides>
+    <mediatype>model/stl</mediatype>
+    <mediatype>model/obj</mediatype>
+    <mediatype>model/3mf</mediatype>
+  </provides>
+  <developer id="com.sleptic">
+    <name>Sleptic</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+</component>

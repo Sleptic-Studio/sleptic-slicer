@@ -1,0 +1,76 @@
+# Copyright (c) 2026 Sleptic
+# SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+# HARDWARE PLACEHOLDERS: generic 4K mono panel and motion envelope.
+# Replace with measured hardware values before printing.
+[identity]
+id = "sleptic-diy-msla"
+manufacturer = "Sleptic"
+family = "Sleptic DIY MSLA"
+name = "Sleptic DIY MSLA"
+profile_version = "1.0.0"
+
+[hardware.build_volume]
+x_mm = 192.0
+y_mm = 120.0
+z_mm = 200.0
+
+[hardware.pixel_resolution]
+x = 3840
+y = 2400
+
+[hardware.pixel_size_microns]
+x = 50.0
+y = 50.0
+
+[hardware.mirror]
+x = false
+y = false
+
+[capabilities]
+supports_grayscale = false
+two_stage_lift = false
+has_camera = false
+
+[[capabilities.output_formats]]
+format = "gcode-zip"
+version = "v1"
+
+[constraints]
+
+[job]
+kind = "gcode-zip"
+
+[job.templates]
+# Home Z, then use absolute coordinates in mm.
+start = """
+G21 ; millimetres
+G28 Z ; home the Z axis
+G90 ; absolute positioning
+"""
+# Position at the slab top, lift/retract in relative mode, then expose.
+# M810/M811 are PLACEHOLDER Marlin macros: configure your LCD/light controller.
+layer = """
+;LAYER_START:{layer}
+;Z:{z}
+G1 Z{z} F{retract_speed} ; position at the layer height
+G91 ; relative peel moves
+G1 Z{lift_distance} F{lift_speed} ; peel lift
+G1 Z-{lift_distance} F{retract_speed} ; retract by the same distance
+G90 ; restore absolute coordinates
+G4 P{light_off_ms} ; settling delay
+M6054 "{image}" ; display layer image (controller integration required)
+{custom.expose_on} ; enable UV
+G4 P{exposure_ms} ; exposure dwell in milliseconds
+{custom.expose_off} ; disable UV
+;LAYER_END
+"""
+end = """
+{custom.expose_off} ; ensure UV is disabled
+G90 ; absolute final lift
+G1 Z{end_lift_z} F{retract_speed} ; raise plate clear of the vat
+M18 ; release motors
+"""
+
+[job.custom]
+expose_on = "M810"
+expose_off = "M811"

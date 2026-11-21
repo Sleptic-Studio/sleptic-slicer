@@ -1,0 +1,38 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// The small card at the bottom of the window that shows a long job's step
+// and progress (loading, saving, generating supports). It has no click area,
+// so clicks pass through to the 3D view under it.
+import { Palette, ProgressIndicator } from "std-widgets.slint";
+
+export component ProgressCard inherits Rectangle {
+    // What is happening now, and how far it is (0 to 1).
+    in property <string> text;
+    in property <float> progress;
+    // The size of the area the card sits at the bottom middle of.
+    in property <length> area-width;
+    in property <length> area-height;
+
+    // Half the area, but never narrower than 240px or wider than 420px.
+    width: Math.max(240px, Math.min(root.area-width * 50%, 420px));
+    height: rows.preferred-height;
+    x: (root.area-width - self.width) / 2;
+    y: root.area-height - self.height - 16px;
+    background: Palette.background;
+    border-color: Palette.border;
+    border-width: 1px;
+    border-radius: 6px;
+
+    rows := VerticalLayout {
+        padding: 12px;
+        spacing: 8px;
+
+        Text {
+            text: root.text;
+            color: Palette.foreground;
+        }
+        ProgressIndicator {
+            progress: root.progress;
+        }
+    }
+}

@@ -1,0 +1,790 @@
+[
+  {
+    "name": "printer",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "material",
+    "input": [
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 2.5,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 5,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05
+      }
+    ],
+    "counts": [
+      0,
+      1,
+      0
+    ],
+    "files": {
+      "materials/probe-resin.toml": "[identity]\nid = \"probe-resin\"\nbrand = \"Example\"\nfamily = \"standard\"\nname = \"Probe Resin\"\nprofile_version = \"3.0.0\"\n\n[intent]\ntarget_layer_height_mm = 0.05\n\n[defaults]\nbottom_layer_count = 5\n\n[per_printer]\n"
+    }
+  },
+  {
+    "name": "targets",
+    "input": [
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 2.5,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 5,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05,
+        "validForPresets": [
+          "probe-printer",
+          "generic-machine"
+        ],
+        "scaleCompensationPct": {
+          "x": 1,
+          "y": -1,
+          "z": 0
+        }
+      }
+    ],
+    "counts": [
+      0,
+      1,
+      0
+    ],
+    "files": {
+      "materials/probe-resin.toml": "[identity]\nid = \"probe-resin\"\nbrand = \"Example\"\nfamily = \"standard\"\nname = \"Probe Resin\"\nprofile_version = \"3.0.0\"\n\n[intent]\ntarget_layer_height_mm = 0.05\n\n[defaults]\nbottom_layer_count = 5\n\n[defaults.scale_compensation_pct]\nx = 1.0\ny = -1.0\nz = 0.0\n\n[per_printer.generic-machine]\nnormal_exposure_sec = 2.5\nbottom_exposure_sec = 30.0\nbottom_layer_count = 5\nlift_distance_mm = 6.0\nlift_speed_mm_min = 60.0\nretract_speed_mm_min = 150.0\n\n[per_printer.probe-printer]\nnormal_exposure_sec = 2.5\nbottom_exposure_sec = 30.0\nbottom_layer_count = 5\nlift_distance_mm = 6.0\nlift_speed_mm_min = 60.0\nretract_speed_mm_min = 150.0\n"
+    }
+  },
+  {
+    "name": "merge",
+    "input": [
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 2.5,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 5,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05,
+        "validForPresets": [
+          "probe-printer"
+        ]
+      },
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 3,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 5,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05,
+        "validForPresets": [
+          "other-printer"
+        ]
+      }
+    ],
+    "counts": [
+      0,
+      1,
+      0
+    ],
+    "files": {
+      "materials/probe-resin.toml": "[identity]\nid = \"probe-resin\"\nbrand = \"Example\"\nfamily = \"standard\"\nname = \"Probe Resin\"\nprofile_version = \"3.0.0\"\n\n[intent]\ntarget_layer_height_mm = 0.05\n\n[defaults]\nbottom_layer_count = 5\n\n[per_printer.other-printer]\nnormal_exposure_sec = 3.0\nbottom_exposure_sec = 30.0\nbottom_layer_count = 5\nlift_distance_mm = 6.0\nlift_speed_mm_min = 60.0\nretract_speed_mm_min = 150.0\n\n[per_printer.probe-printer]\nnormal_exposure_sec = 2.5\nbottom_exposure_sec = 30.0\nbottom_layer_count = 5\nlift_distance_mm = 6.0\nlift_speed_mm_min = 60.0\nretract_speed_mm_min = 150.0\n"
+    }
+  },
+  {
+    "name": "pitch",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb",
+          "formatVersion": "v5"
+        },
+        "pixelSize": {
+          "x": 50,
+          "y": 60
+        },
+        "family": "  ",
+        "imageAssetPath": "pic.png",
+        "networkSupport": "AnyNetwork",
+        "antiAliasing": true,
+        "hasCamera": true
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"  \"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 50.0\ny_mm = 36.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 50.0\ny = 60.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = true\ntwo_stage_lift = false\nhas_camera = true\nnetwork_protocol = \"AnyNetwork\"\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\nversion = \"v5\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "mismatch",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        },
+        "pixelSize": {
+          "x": 90,
+          "y": 100
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "space-name",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "  ",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"  \"\nname = \"  \"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "empty-family",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        },
+        "family": ""
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "empty-version",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb",
+          "formatVersion": ""
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "bad-pitch-ignored",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        },
+        "pixelSize": {
+          "x": -1,
+          "y": 0
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "invalid-count",
+    "input": [
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 2.5,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 4294967295,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05
+      }
+    ],
+    "counts": [
+      0,
+      1,
+      0
+    ],
+    "files": {
+      "materials/probe-resin.toml": "[identity]\nid = \"probe-resin\"\nbrand = \"Example\"\nfamily = \"standard\"\nname = \"Probe Resin\"\nprofile_version = \"3.0.0\"\n\n[intent]\ntarget_layer_height_mm = 0.05\n\n[defaults]\nbottom_layer_count = 4294967295\n\n[per_printer]\n"
+    }
+  },
+  {
+    "name": "same-calibration",
+    "input": [
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 2.5,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 5,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05,
+        "validForPresets": [
+          "probe-printer"
+        ]
+      },
+      {
+        "templateId": "probe-resin",
+        "profileVersion": 3,
+        "name": "Probe Resin",
+        "brand": "Example",
+        "resinFamily": "standard",
+        "normalExposureSec": 2.5,
+        "bottomExposureSec": 30,
+        "bottomLayerCount": 5,
+        "liftDistanceMm": 6,
+        "liftSpeedMmMin": 60,
+        "retractSpeedMmMin": 150,
+        "layerHeightMm": 0.05,
+        "validForPresets": [
+          "probe-printer"
+        ]
+      }
+    ],
+    "counts": [
+      0,
+      1,
+      0
+    ],
+    "files": {
+      "materials/probe-resin.toml": "[identity]\nid = \"probe-resin\"\nbrand = \"Example\"\nfamily = \"standard\"\nname = \"Probe Resin\"\nprofile_version = \"3.0.0\"\n\n[intent]\ntarget_layer_height_mm = 0.05\n\n[defaults]\nbottom_layer_count = 5\n\n[per_printer.probe-printer]\nnormal_exposure_sec = 2.5\nbottom_exposure_sec = 30.0\nbottom_layer_count = 5\nlift_distance_mm = 6.0\nlift_speed_mm_min = 60.0\nretract_speed_mm_min = 150.0\n"
+    }
+  },
+  {
+    "name": "duplicate-printer",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        }
+      },
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        }
+      }
+    ],
+    "counts": [
+      2,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "empty-network",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        },
+        "networkSupport": ""
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "unicode-format",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ÄFF"
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"Äff\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "format-0",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": " CTB ",
+          "formatVersion": "  v5  "
+        },
+        "networkSupport": "  "
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\nnetwork_protocol = \"  \"\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\nversion = \"  v5  \"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "format-1",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "SL1",
+          "formatVersion": "  v5  "
+        },
+        "networkSupport": "  "
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\nnetwork_protocol = \"  \"\n\n[[capabilities.output_formats]]\nformat = \"sl1\"\nversion = \"  v5  \"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "format-2",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb",
+          "formatVersion": "  v5  "
+        },
+        "networkSupport": "  "
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\nnetwork_protocol = \"  \"\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\nversion = \"  v5  \"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "format-3",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "unknown-FORMAT",
+          "formatVersion": "  v5  "
+        },
+        "networkSupport": "  "
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\nnetwork_protocol = \"  \"\n\n[[capabilities.output_formats]]\nformat = \"unknown-format\"\nversion = \"  v5  \"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "format-4",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "png_per_layer",
+          "formatVersion": "  v5  "
+        },
+        "networkSupport": "  "
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\nnetwork_protocol = \"  \"\n\n[[capabilities.output_formats]]\nformat = \"png_per_layer\"\nversion = \"  v5  \"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "decimal-geometry",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 223.11,
+          "depth": 135.7,
+          "height": 250.25
+        },
+        "display": {
+          "resolutionX": 11520,
+          "resolutionY": 5123,
+          "outputFormat": "ctb"
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 223.11\ny_mm = 135.7\nz_mm = 250.25\n\n[hardware.pixel_resolution]\nx = 11520\ny = 5123\n\n[hardware.pixel_size_microns]\nx = 19.3671875\ny = 26.488385711497166\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "decimal-pitch",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "height": 250
+        },
+        "display": {
+          "resolutionX": 5123,
+          "resolutionY": 11520,
+          "outputFormat": "ctb"
+        },
+        "pixelSize": {
+          "x": 19.3177,
+          "y": 23.1117
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 98.9645771\ny_mm = 266.246784\nz_mm = 250.0\n\n[hardware.pixel_resolution]\nx = 5123\ny = 11520\n\n[hardware.pixel_size_microns]\nx = 19.3177\ny = 23.1117\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "mixed-axis",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "width": 100,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 1000,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        },
+        "pixelSize": {
+          "x": -100,
+          "y": 50
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 100.0\ny_mm = 30.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 1000\ny = 600\n\n[hardware.pixel_size_microns]\nx = 100.0\ny = 50.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  },
+  {
+    "name": "pitch-roundtrip",
+    "input": [
+      {
+        "presetId": "probe-printer",
+        "profileVersion": 4,
+        "manufacturer": "Example",
+        "name": "Probe Printer",
+        "buildVolumeMm": {
+          "depth": 60,
+          "height": 150
+        },
+        "display": {
+          "resolutionX": 3085,
+          "resolutionY": 600,
+          "outputFormat": "ctb"
+        },
+        "pixelSize": {
+          "x": 46.6539,
+          "y": 100
+        }
+      }
+    ],
+    "counts": [
+      1,
+      0,
+      0
+    ],
+    "files": {
+      "printers/probe-printer.toml": "[identity]\nid = \"probe-printer\"\nmanufacturer = \"Example\"\nfamily = \"Probe Printer\"\nname = \"Probe Printer\"\nprofile_version = \"4.0.0\"\n\n[hardware.build_volume]\nx_mm = 143.92728150000002\ny_mm = 60.0\nz_mm = 150.0\n\n[hardware.pixel_resolution]\nx = 3085\ny = 600\n\n[hardware.pixel_size_microns]\nx = 46.6539\ny = 100.0\n\n[hardware.mirror]\nx = false\ny = false\n\n[capabilities]\nsupports_grayscale = false\ntwo_stage_lift = false\nhas_camera = false\n\n[[capabilities.output_formats]]\nformat = \"ctb\"\n\n[constraints]\n"
+    }
+  }
+]

@@ -1,0 +1,1 @@
+These synthetic printer and resin inputs were authored for the rewrite contract. Expected TOML and counts were captured by running the baseline executable on those inputs. They contain no third-party production profiles or imported test code. Fixture data is distributed under the application license.

@@ -1,0 +1,14 @@
+[identity]
+id = "probe-resin"
+brand = "Example"
+family = "standard"
+name = "Probe Resin"
+profile_version = "3.0.0"
+
+[intent]
+target_layer_height_mm = 0.05
+
+[defaults]
+bottom_layer_count = 5
+
+[per_printer]

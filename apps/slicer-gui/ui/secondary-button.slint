@@ -1,0 +1,42 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ShellTheme } from "theme.slint";
+
+// Shared neutral action surface for panels, popovers and dialogs.
+export component SecondaryButton inherits Rectangle {
+    in property <string> text;
+    in property <image> icon;
+    in property <bool> enabled: true;
+    in property <bool> colorize-icon: true;
+    in property <bool> primary: false;
+    in property <color> text-color: ShellTheme.text;
+    callback clicked();
+    accessible-role: button;
+    accessible-label: root.text;
+    accessible-enabled: root.enabled;
+    accessible-action-default => { if root.enabled { root.clicked(); } }
+    min-height: 32px;
+    min-width: 0px;
+    preferred-width: content.preferred-width;
+    border-radius: ShellTheme.radius;
+    border-width: 1px;
+    border-color: focus.has-focus || root.primary ? ShellTheme.accent : ShellTheme.border;
+    background: root.primary ? ShellTheme.accent.transparentize(0.85) : touch.pressed ? ShellTheme.background : touch.has-hover ? ShellTheme.field : ShellTheme.panel;
+    opacity: root.enabled ? 1 : 0.45;
+    forward-focus: focus;
+    focus := FocusScope {
+        key-pressed(event) => {
+            if root.enabled && (event.text == Key.Return || event.text == " ") { root.clicked(); return accept; }
+            return reject;
+        }
+    }
+    content := HorizontalLayout {
+        padding-left: 8px; padding-right: 8px; spacing: 8px; alignment: center;
+        // An 18 px image directly in the row is pinned to its top edge;
+        // the column centres it against the text.
+        if root.icon.width > 0: VerticalLayout { alignment: center;
+            Image { source: root.icon; width: 18px; height: 18px; colorize: ShellTheme.text; } }
+        if root.text != "": Text { text: root.text; color: root.text-color; vertical-alignment: center; horizontal-alignment: center; font-size: 13px; overflow: elide; }
+    }
+    touch := TouchArea { enabled: root.enabled; mouse-cursor: root.enabled ? pointer : default; clicked => { root.clicked(); } }
+}

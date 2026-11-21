@@ -1,0 +1,26 @@
+[identity]
+id = "liqcreate-flexible-x"
+brand = "Liqcreate"
+family = "flexible"
+name = "Flexible-X"
+profile_version = "1.0.0"
+
+[intent]
+target_layer_height_mm = 0.05
+
+[defaults]
+density_g_ml = 1.1
+bottom_layer_count = 5
+support_overhang_angle_deg = 70.0
+
+[defaults.scale_compensation_pct]
+x = 0.0
+y = 0.0
+z = 0.0
+
+[per_printer.generic-machine]
+normal_exposure_sec = 5.0
+bottom_exposure_sec = 45.0
+lift_distance_mm = 8.0
+lift_speed_mm_min = 40.0
+retract_speed_mm_min = 100.0

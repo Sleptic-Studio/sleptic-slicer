@@ -1,0 +1,26 @@
+[package]
+name = "sc-mesh-formats"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Mesh and scene interchange for STL, OBJ and 3MF."
+categories = ["rendering::data-formats"]
+keywords = ["3d", "mesh", "stl"]
+
+[lints]
+workspace = true
+
+[dependencies]
+any_ascii.workspace = true
+float-cmp.workspace = true
+rayon.workspace = true
+sc-3mf.workspace = true
+sc-mesh-core.workspace = true
+sc-scene.workspace = true
+
+[dev-dependencies]
+anyhow.workspace = true
+proptest.workspace = true
+sc-mesh-fixtures.workspace = true
+tempfile = "3.23.0"

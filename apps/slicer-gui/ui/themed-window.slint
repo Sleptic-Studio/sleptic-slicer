@@ -1,0 +1,26 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { Palette } from "std-widgets.slint";
+
+// What every separate window of the app shares: the app font, and the
+// shell and widget colours following `window-theme`. Slint does not show
+// an inherited property to Rust, so each window keeps its own public
+// `theme` and binds `window-theme` to it.
+export component ThemedWindow inherits Window {
+    in property <ThemePreference> window-theme: ThemePreference.System;
+    default-font-family: "Noto Sans";
+
+    function follow-theme() {
+        ShellTheme.light = root.window-theme == ThemePreference.Light;
+        Palette.color-scheme = root.window-theme == ThemePreference.Light ? ColorScheme.light : ColorScheme.dark;
+    }
+
+    init => {
+        root.follow-theme();
+    }
+    changed window-theme => {
+        root.follow-theme();
+    }
+}

@@ -1,0 +1,5 @@
+# Profiles, golden files and sources are compared byte for byte: keep LF on
+# every checkout, whatever core.autocrlf says. Windows scripts keep CRLF.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf

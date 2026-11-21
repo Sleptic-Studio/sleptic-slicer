@@ -1,0 +1,216 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { SecondaryButton as Button } from "secondary-button.slint";
+import { ShellTheme } from "theme.slint";
+
+import { LineEdit, Palette } from "std-widgets.slint";
+
+// One labelled numeric field: a short axis label plus a decimal
+// LineEdit. Commits on Enter (`accepted`) or on losing focus, not per
+// keystroke — a transform edit is a discrete, undoable action, not a
+// live-typed value, and a mid-number keystroke like a bare "-" is not
+// yet a valid float to parse. External updates (the Rust side
+// re-formatting after a commit, or a live gizmo drag moving the same
+// object) must be pushed back into the LineEdit explicitly: its text
+// binding only applies once, the same caveat `ProfileInputRow` in
+// profile-view-dialog.slint documents for the same reason.
+component PositionField inherits HorizontalLayout {
+    in property <string> axis-label;
+    in property <string> value;
+    in property <bool> loading: false;
+    callback committed(string);
+
+    // Same row geometry as the docked panel's Rotation/Scale rows.
+    spacing: 4px;
+    height: 32px;
+
+    Text {
+        text: root.axis-label;
+        width: 55%;
+        color: ShellTheme.text;
+        vertical-alignment: center;
+    }
+
+    input := LineEdit {
+        accessible-label: @tr("Position {} (mm)", root.axis-label);
+        text: root.value;
+        min-width: 0px;
+        horizontal-alignment: right;
+        input-type: InputType.decimal;
+        enabled: !root.loading;
+
+        accepted(t) => {
+            root.committed(t);
+        }
+        // Enter already commits via `accepted`; a plain focus loss
+        // (Tab, or clicking elsewhere) commits the same way so the
+        // user isn't required to press Enter for every field.
+        changed has-focus => {
+            if (!self.has-focus) {
+                root.committed(self.text);
+            }
+        }
+    }
+
+    changed value => {
+        input.text = root.value;
+    }
+}
+
+// Transform-section tool surface: numeric X/Y/Z position entry plus a
+// read-only bounding-box size readout for the selected object, in
+// millimetres. Sits directly below the workspace-section pill (see
+// main-window.slint's Prepare-section "Repair meshes" pill for the
+// sibling pattern this mirrors), visible only while exactly one
+// object is selected in the Transform section.
+//
+// Position is deliberately the only EDITABLE field, not also scale or
+// rotation: a local transform's translation is a plain stored field,
+// so reading and replacing it is exact with no risk of misinterpreting
+// the object's existing rotation or scale. Scale and rotation would
+// need decomposing the transform's linear part, which `sc-mesh-core`
+// does not (and should not, without real matrix-decomposition work)
+// provide today. The bounding-box row sidesteps this entirely: it is
+// read directly off the mesh's transformed AABB, never decomposed
+// back out of the matrix, so it stays exact and read-only.
+export component TransformPanel inherits Rectangle {
+    in property <string> position-x-text;
+    in property <string> position-y-text;
+    in property <string> position-z-text;
+    callback position-x-committed(string);
+    callback position-y-committed(string);
+    callback position-z-committed(string);
+    // Read-only world-space bounding-box size (mm): the selected
+    // object's axis-aligned extent after its own rotation, i.e. what
+    // actually determines whether it fits on the plate or under
+    // another object -- not the mesh's own unrotated size. Empty for
+    // a leaf with no renderable geometry.
+    in property <string> bbox-x-text;
+    in property <string> bbox-y-text;
+    in property <string> bbox-z-text;
+    // One-click plate-alignment actions. Both are pure translations,
+    // same as the Position fields, computed from the object's actual
+    // world-space bounding box on the Rust side.
+    callback center-on-plate-requested();
+    callback drop-to-plate-requested();
+    // True while a new file is loading. Disables every interactive
+    // element in the panel (each field, both buttons — `Rectangle`
+    // itself has no `enabled` property to gate the whole subtree at
+    // once) so a stray click can't commit an edit against the
+    // outgoing scene moments before it's replaced — the same
+    // `!loading` gate every other Transform-section action (Delete,
+    // the gizmo focus keys, Copy/Paste) already uses.
+    in property <bool> loading: false;
+
+    width: 260px;
+    // Flat: it lives inside the docked object panel, which already frames it.
+    height: layout.preferred-height;
+
+    layout := VerticalLayout {
+        padding: 0px;
+        spacing: 6px;
+
+        // Row 1: the numeric position readout/entry.
+        VerticalLayout {
+            spacing: 8px;
+
+            Text {
+                text: @tr("Transform" => "Position (mm)");
+                color: ShellTheme.muted;
+                vertical-alignment: center;
+
+                Tooltip {
+                    text: @markdown("\{@tr("Transform" => "The selected object's X/Y/Z position in millimetres. Editing a value moves the object by exactly that offset without changing its rotation or scale.")}");
+                }
+            }
+
+            PositionField {
+                axis-label: @tr("Transform" => "X");
+                value: root.position-x-text;
+                loading: root.loading;
+                committed(t) => {
+                    root.position-x-committed(t);
+                }
+            }
+            PositionField {
+                axis-label: @tr("Transform" => "Y");
+                value: root.position-y-text;
+                loading: root.loading;
+                committed(t) => {
+                    root.position-y-committed(t);
+                }
+            }
+            PositionField {
+                axis-label: @tr("Transform" => "Z");
+                value: root.position-z-text;
+                loading: root.loading;
+                committed(t) => {
+                    root.position-z-committed(t);
+                }
+            }
+        }
+
+        // Row 1b: read-only bounding-box size, shown right under the
+        // editable position so the two read as one "here's the
+        // object's current placement and size" group. Hidden (not
+        // just blank) when there is no geometry to measure, so the
+        // panel doesn't show a dangling "× ×" for that edge case.
+        if root.bbox-x-text != "": HorizontalLayout {
+            spacing: 8px;
+
+            Text {
+                text: @tr("Transform" => "Size");
+                color: Palette.foreground.transparentize(0.3);
+                vertical-alignment: center;
+
+                Tooltip {
+                    text: @markdown("\{@tr("Transform" => "The object's axis-aligned size in world space, after its current rotation -- this is what determines whether it fits on the plate or clears another object, not its unrotated mesh size.")}");
+                }
+            }
+
+            Text {
+                text: root.bbox-x-text + " \u{d7} " + root.bbox-y-text + " \u{d7} " + root.bbox-z-text + " mm";
+                horizontal-alignment: right;
+                horizontal-stretch: 1;
+                vertical-alignment: center;
+            }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Palette.border;
+        }
+
+        // Row 2: one-click plate-alignment actions. A separate row
+        // (rather than tacked onto the end of row 1) so the panel
+        // reads as two clear groups — "current position" then "quick
+        // moves" — instead of one long, hard-to-scan strip.
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: stretch;
+
+            Button {
+                text: @tr("Transform" => "Center");
+                enabled: !root.loading;
+                clicked => {
+                    root.center-on-plate-requested();
+                }
+
+                Tooltip {
+                    text: @markdown("\{@tr("Transform" => "Centres the object over the plate on X and Y. Z is untouched.")}");
+                }
+            }
+            Button {
+                text: @tr("Transform" => "Drop to plate");
+                enabled: !root.loading;
+                clicked => {
+                    root.drop-to-plate-requested();
+                }
+
+                Tooltip {
+                    text: @markdown("\{@tr("Transform" => "Moves the object straight down (or up) until its lowest point rests on the plate. X and Y are untouched.")}");
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+[package]
+name = "sc-scene"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Stable scene graphs, shared geometry, plate placement and mesh maintenance"
+categories = ["rendering::data-formats"]
+keywords = ["3d", "mesh", "scene", "graph"]
+
+[lints]
+workspace = true
+
+[dependencies]
+rayon.workspace = true
+sc-mesh-core.workspace = true
+

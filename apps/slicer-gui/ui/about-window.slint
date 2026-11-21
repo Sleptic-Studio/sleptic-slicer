@@ -1,0 +1,93 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { AboutSlint } from "std-widgets.slint";
+import { ThemedWindow } from "themed-window.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "./preferences/appearance.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { DialogFooter } from "dialog-parts.slint";
+import { EscapeScope } from "form-parts.slint";
+
+// Help > About, laid out like the app's other dialogs: the logo beside the
+// name, version, a line on what the app is and its credit, then Close in
+// the footer band. Enter or Escape close it.
+export component AboutWindow inherits ThemedWindow {
+    title: @tr("About Sleptic Slicer");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.panel;
+    preferred-width: 520px;
+    min-width: 440px;
+    // As tall as its text needs.
+    min-height: content.preferred-height;
+    preferred-height: content.preferred-height;
+    forward-focus: close-button;
+
+    in property <string> about-release-label: "";
+    in property <ThemePreference> about-color-preference: ThemePreference.System;
+    window-theme: root.about-color-preference;
+
+    callback close-requested();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => { root.close-requested(); }
+
+        content := VerticalLayout {
+            alignment: start;
+
+            HorizontalLayout {
+                padding: 24px;
+                spacing: 20px;
+
+                VerticalLayout {
+                    alignment: start;
+                    Image {
+                        source: @image-url("../assets/images/sleptic.svg");
+                        width: 96px;
+                        height: 96px;
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 6px;
+                    horizontal-stretch: 1;
+
+                    Text {
+                        text: @tr("Sleptic Slicer");
+                        color: ShellTheme.text;
+                        font-size: 1.6rem;
+                        font-weight: 700;
+                    }
+                    Text {
+                        text: @tr("About" => "Version {0}", root.about-release-label);
+                        color: ShellTheme.muted;
+                    }
+                    Text {
+                        text: @tr("About" => "A source-available slicer for resin 3D printers.");
+                        color: ShellTheme.text;
+                        wrap: word-wrap;
+                    }
+                    Text {
+                        text: @tr("About" => "By Sleptic. Licensed under the Sleptic Source License.");
+                        color: ShellTheme.muted;
+                        font-size: 0.85rem;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            AboutSlint {
+                horizontal-stretch: 0;
+            }
+
+            DialogFooter {
+                close-button := PrimaryButton {
+                    text: @tr("About" => "Close");
+                    clicked => { root.close-requested(); }
+                }
+            }
+        }
+    }
+}

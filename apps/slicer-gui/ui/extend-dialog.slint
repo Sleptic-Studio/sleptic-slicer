@@ -1,0 +1,107 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ComboBox } from "std-widgets.slint";
+import { ThemedWindow } from "themed-window.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { ProfileInputRow } from "profile-view-dialog.slint";
+import { DimText, EscapeScope, FormBody } from "form-parts.slint";
+
+// A heading over a group of the dialog's values.
+component GroupTitle inherits Text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: ShellTheme.muted;
+}
+
+// Adds a calibration block for one more target to a resin's extension
+// file. Rust offers only targets the resin has no block for; the values,
+// in two groups, appear once a target is picked and may be left partly
+// empty. Only a picked target can be saved.
+export component ExtendDialog inherits ThemedWindow {
+    title: @tr("ExtendDialog" => "Extend resin profile");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.panel;
+    preferred-width: 480px;
+    preferred-height: 470px;
+    min-width: 420px;
+    min-height: 300px;
+    forward-focus: target-picker;
+
+    in-out property <ThemePreference> extension-dialog-theme: ThemePreference.System;
+    window-theme: root.extension-dialog-theme;
+
+    in property <string> extension-source-title;
+    in property <[string]> extension-target-choices;
+    in-out property <int> extension-target-selection: -1;
+    in-out property <string> extension-normal-exposure-input;
+    in-out property <string> extension-bottom-exposure-input;
+    in-out property <string> extension-bottom-layer-input;
+    in-out property <string> extension-lift-distance-input;
+    in-out property <string> extension-lift-speed-input;
+    in-out property <string> extension-retract-speed-input;
+    in property <string> extension-validation-message;
+
+    callback extension-save-requested();
+    callback extension-cancel-requested();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => { root.extension-cancel-requested(); }
+
+        FormBody {
+            heading: @tr("ExtendDialog" => "Extend {}", root.extension-source-title);
+            problem: root.extension-validation-message;
+            confirm-label: @tr("ExtendDialog" => "Save");
+            confirm-enabled: root.extension-target-selection >= 0;
+            confirmed => { root.extension-save-requested(); }
+            cancelled => { root.extension-cancel-requested(); }
+
+            DimText {
+                text: @tr("ExtendDialog" => "Add calibration values for a target this resin does not cover yet.");
+                wrap: word-wrap;
+            }
+            target-picker := ComboBox {
+                model: root.extension-target-choices;
+                current-index <=> root.extension-target-selection;
+            }
+
+            // Takes the free height, so the footer stays at the bottom.
+            VerticalLayout {
+                alignment: start;
+                spacing: 6px;
+                vertical-stretch: 1;
+                if root.extension-target-selection >= 0: VerticalLayout {
+                    spacing: 6px;
+                    GroupTitle { text: @tr("ExtendDialog" => "Exposure"); }
+                    ProfileInputRow {
+                        input-caption: @tr("ExtendDialog" => "Normal exposure (s)");
+                        input-content <=> root.extension-normal-exposure-input;
+                    }
+                    ProfileInputRow {
+                        input-caption: @tr("ExtendDialog" => "Bottom exposure (s)");
+                        input-content <=> root.extension-bottom-exposure-input;
+                    }
+                    ProfileInputRow {
+                        input-caption: @tr("ExtendDialog" => "Bottom layer count");
+                        input-content <=> root.extension-bottom-layer-input;
+                    }
+                    GroupTitle { text: @tr("ExtendDialog" => "Motion"); }
+                    ProfileInputRow {
+                        input-caption: @tr("ExtendDialog" => "Lift distance (mm)");
+                        input-content <=> root.extension-lift-distance-input;
+                    }
+                    ProfileInputRow {
+                        input-caption: @tr("ExtendDialog" => "Lift speed (mm/min)");
+                        input-content <=> root.extension-lift-speed-input;
+                    }
+                    ProfileInputRow {
+                        input-caption: @tr("ExtendDialog" => "Retract speed (mm/min)");
+                        input-content <=> root.extension-retract-speed-input;
+                    }
+                }
+            }
+        }
+    }
+}

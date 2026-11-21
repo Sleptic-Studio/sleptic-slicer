@@ -1,0 +1,135 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ThemedWindow } from "themed-window.slint";
+import { SecondaryButton as Button } from "secondary-button.slint";
+import { ShellTheme } from "theme.slint";
+
+import { Palette, ScrollView } from "std-widgets.slint";
+import { ThemePreference } from "./preferences/appearance.slint";
+
+// One row of the shortcuts list: a plain-English action and the key
+// combination that triggers it. `keys` is already formatted for
+// display on the Rust side (e.g. "Ctrl+Z", or "Ctrl+Cmd+F" / "F11" on
+// macOS where the fullscreen binding differs) rather than assembled
+// from raw key codes here, since the OS-specific formatting decision
+// (Ctrl vs Cmd, Delete vs Backspace) already lives in Rust for the
+// real menu shortcuts and shouldn't be duplicated in Slint.
+export struct ShortcutRow {
+    action: string,
+    keys: string,
+}
+
+// One titled group of rows (e.g. "File", "Viewport camera").
+export struct ShortcutGroup {
+    title: string,
+    rows: [ShortcutRow],
+}
+
+// Read-only reference dialog listing every keyboard shortcut the app
+// recognises, grouped by area. Static content driven entirely by
+// `groups`; unlike most dialogs in this app there is nothing to edit
+// or submit, so the only callback is closing it.
+export component ShortcutsDialog inherits ThemedWindow {
+    background: ShellTheme.background;
+
+    title: @tr("ShortcutsDialog" => "Keyboard Shortcuts");
+    icon: @image-url("../assets/images/sleptic.svg");
+
+    in property <ThemePreference> theme: ThemePreference.System;
+    window-theme: root.theme;
+    in property <[ShortcutGroup]> groups;
+
+    callback close-requested();
+
+    min-width: 380px;
+    min-height: 320px;
+    preferred-width: 460px;
+    preferred-height: 560px;
+
+    forward-focus: close-button;
+
+    FocusScope {
+        width: parent.width;
+        height: parent.height;
+
+        key-pressed(event) => {
+            if (event.text == Key.Escape) {
+                root.close-requested();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 12px;
+
+            Text {
+                text: @tr("ShortcutsDialog" => "Keyboard Shortcuts");
+                font-size: 1.1rem;
+                font-weight: 700;
+            }
+
+            ScrollView {
+                vertical-stretch: 1;
+
+                VerticalLayout {
+                    spacing: 14px;
+                    alignment: start;
+                    // Room for the overlay scrollbar (it covered the keys).
+                    padding-right: 16px;
+
+                    for group in root.groups: VerticalLayout {
+                        spacing: 4px;
+
+                        Text {
+                            text: group.title;
+                            font-size: 0.85rem;
+                            font-weight: 700;
+                            color: Palette.accent-background;
+                        }
+
+                        for row in group.rows: HorizontalLayout {
+                            spacing: 12px;
+
+                            Text {
+                                text: row.action;
+                                font-size: 0.85rem;
+                                horizontal-stretch: 1;
+                                wrap: word-wrap;
+                            }
+
+                            Rectangle {
+                                border-radius: 4px;
+                                background: Palette.alternate-background;
+                                border-width: 1px;
+                                border-color: Palette.border;
+                                width: keys-text.preferred-width + 14px;
+                                height: keys-text.preferred-height + 6px;
+
+                                keys-text := Text {
+                                    text: row.keys;
+                                    font-size: 0.8rem;
+                                    font-family: "Consolas";
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                alignment: end;
+
+                close-button := Button {
+                    text: @tr("ShortcutsDialog" => "Close");
+                    clicked => {
+                        root.close-requested();
+                    }
+                }
+            }
+        }
+    }
+}

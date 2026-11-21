@@ -1,0 +1,473 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2026-05-21 18:10+0000\n"
+"PO-Revision-Date: 2026-07-24 13:11+0000\n"
+"Last-Translator: Sleptic\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2026.6.1\n"
+
+#: ui/about-window.slint:10
+msgctxt "AboutWindow"
+msgid "About Sleptic Slicer"
+msgstr "Acerca de Sleptic Slicer"
+
+#: ui/about-window.slint:54
+msgctxt "AboutWindow"
+msgid "Sleptic Slicer"
+msgstr "Sleptic Slicer"
+
+#: ui/about-window.slint:61
+msgctxt "About"
+msgid "Version {0}"
+msgstr "Versión {0}"
+
+#: ui/about-window.slint:67
+msgctxt "About"
+msgid "An open source slicer for resin 3D printers."
+msgstr "Un \"slicer\" de código libre para impresoras 3D de resina."
+
+#: ui/about-window.slint:73
+msgctxt "About"
+msgid "Licensed under AGPL-3.0-only"
+msgstr "Licenciado bajo AGPL-3.0-only"
+
+#: ui/about-window.slint:83
+msgctxt "About"
+msgid "Close"
+msgstr "Cerrar"
+
+#: ui/replace-scene-dialog.slint:14
+msgctxt "ReplaceSceneDialog"
+msgid "Open new model"
+msgstr "Abrir nuevo modelo"
+
+#: ui/replace-scene-dialog.slint:61
+msgctxt "ReplaceSceneDialog"
+msgid "Replace the current scene?"
+msgstr "¿Quieres sustituir la escena actual?"
+
+#: ui/replace-scene-dialog.slint:67
+msgctxt "ReplaceSceneDialog"
+msgid "Opening: {}"
+msgstr "Abriendo: {}"
+
+#: ui/replace-scene-dialog.slint:80
+msgctxt "ReplaceSceneDialog"
+msgid ""
+"The current scene will be closed. Export it first to keep any changes you've "
+"made."
+msgstr ""
+"Se cerrará la escena actual. Exporta primero para guardar los cambios que "
+"hayas realizado."
+
+#: ui/replace-scene-dialog.slint:84
+msgctxt "ReplaceSceneDialog"
+msgid "The current scene will be closed."
+msgstr "Se cerrará la escena actual."
+
+#: ui/replace-scene-dialog.slint:98
+msgctxt "ReplaceSceneDialog"
+msgid "Discard & Open"
+msgstr "Descartar y abrir"
+
+#: ui/replace-scene-dialog.slint:105
+msgctxt "ReplaceSceneDialog"
+msgid "Export & Open…"
+msgstr "Exportar y abrir…"
+
+#: ui/replace-scene-dialog.slint:112
+msgctxt "ReplaceSceneDialog"
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: ui/preferences/preferences-window.slint:12
+msgctxt "PreferencesWindow"
+msgid "Preferences"
+msgstr "Ajustes"
+
+#: ui/preferences/preferences-window.slint:56
+msgctxt "PreferencesMenu"
+msgid "Preferences Sections"
+msgstr "Preferencias"
+
+#: ui/preferences/preferences-window.slint:58
+msgctxt "PreferencesMenu"
+msgid "UI & Theme"
+msgstr "Interfaz de usuario y tema"
+
+#: ui/preferences/preferences-window.slint:59
+msgctxt "PreferencesMenu"
+msgid "3D View"
+msgstr "Vista 3D"
+
+#: ui/preferences/3dview.slint:10
+msgctxt "PreferencesPage"
+msgid "3D View"
+msgstr "Vista 3D"
+
+#: ui/preferences/3dview.slint:37
+msgctxt "PreferencesPage"
+msgid "Build volume (mm)"
+msgstr "Volumen de impresión (mm)"
+
+#: ui/preferences/3dview.slint:47
+msgctxt "PreferencesPage"
+msgid "Width"
+msgstr "Anchura"
+
+#: ui/preferences/3dview.slint:55
+msgctxt "PreferencesPage"
+msgid "Build volume width in millimetres"
+msgstr "Anchura del volumen de impresión en milímetros"
+
+#: ui/preferences/3dview.slint:73
+msgctxt "PreferencesPage"
+msgid "Depth"
+msgstr "Profundidad"
+
+#: ui/preferences/3dview.slint:81
+msgctxt "PreferencesPage"
+msgid "Build volume depth in millimetres"
+msgstr "Profundidad del volumen de impresión en milímetros"
+
+#: ui/preferences/3dview.slint:96
+msgctxt "PreferencesPage"
+msgid "Height"
+msgstr "Altura"
+
+#: ui/preferences/3dview.slint:104
+msgctxt "PreferencesPage"
+msgid "Build volume height in millimetres"
+msgstr "Altura del volumen de impresión en milímetros"
+
+#: ui/preferences/3dview.slint:118
+msgctxt "PreferencesPage"
+msgid "Reset to default"
+msgstr "Restablecer los valores predeterminados"
+
+#: ui/preferences/appearance.slint:12
+msgctxt "PreferencesPage"
+msgid "UI & Theme"
+msgstr "Interfaz de usuario y tema"
+
+#: ui/preferences/appearance.slint:27
+msgctxt "AppearancePage"
+msgid "System"
+msgstr "Sistema"
+
+#: ui/preferences/appearance.slint:28
+msgctxt "AppearancePage"
+msgid "Light"
+msgstr "Claro"
+
+#: ui/preferences/appearance.slint:29
+msgctxt "AppearancePage"
+msgid "Dark"
+msgstr "Oscuro"
+
+#: ui/preferences/appearance.slint:49 ui/preferences/appearance.slint:60
+msgctxt "AppearancePage"
+msgid "Theme"
+msgstr "Tema"
+
+#: ui/preferences/appearance.slint:73 ui/preferences/appearance.slint:81
+msgctxt "AppearancePage"
+msgid "Language"
+msgstr "Idioma"
+
+#: ui/error-dialog.slint:9
+msgctxt "ErrorDialog"
+msgid "Error"
+msgstr "Error"
+
+#: ui/error-dialog.slint:12
+msgctxt "ErrorDialog"
+msgid "An error occurred"
+msgstr "Ha ocurrido un error"
+
+#: ui/error-dialog.slint:73
+msgctxt "ErrorDialog"
+msgid "Warning"
+msgstr "Aviso"
+
+#. runs automatically.
+#: ui/error-dialog.slint:115
+msgctxt "ErrorDialog"
+msgid "Hide technical details"
+msgstr "Ocultar detalles técnicos"
+
+#. runs automatically.
+#: ui/error-dialog.slint:115
+msgctxt "ErrorDialog"
+msgid "Show technical details"
+msgstr "Mostrar detalles técnicos"
+
+#: ui/error-dialog.slint:142
+msgctxt "ErrorDialog"
+msgid "Close"
+msgstr "Cerrar"
+
+#: ui/object-list-panel.slint:18
+msgctxt "ObjectList"
+msgid "Scene objects"
+msgstr "Objetos de escena"
+
+#: ui/object-list-panel.slint:38
+msgctxt "ObjectList"
+msgid "Scene Objects"
+msgstr "Objetos de escena"
+
+#: ui/object-list-panel.slint:59
+msgctxt "ObjectList"
+msgid "No objects to display"
+msgstr "No hay elementos que mostrar"
+
+#: ui/main-window.slint:61
+msgctxt "MainWindow"
+msgid "Sleptic Slicer"
+msgstr "Sleptic Slicer"
+
+#: ui/main-window.slint:154
+msgctxt "MenuBar"
+msgid "File"
+msgstr "Archivo"
+
+#: ui/main-window.slint:157
+msgctxt "MenuBar"
+msgid "New Window"
+msgstr "Nueva ventana"
+
+#: ui/main-window.slint:167
+msgctxt "MenuBar"
+msgid "Open…"
+msgstr "Abrir…"
+
+#: ui/main-window.slint:176
+msgctxt "MenuBar"
+msgid "Close"
+msgstr "Cerrar"
+
+#: ui/main-window.slint:187
+msgctxt "MenuBar"
+msgid "Save"
+msgstr "Guardar"
+
+#: ui/main-window.slint:193
+msgctxt "MenuBar"
+msgid "Save As…"
+msgstr "Guardar como…"
+
+#: ui/main-window.slint:201
+msgctxt "MenuBar"
+msgid "Export As…"
+msgstr "Exportar como…"
+
+#: ui/main-window.slint:211
+msgctxt "MenuBar"
+msgid "Edit"
+msgstr "Editar"
+
+#: ui/main-window.slint:213
+msgctxt "MenuBar"
+msgid "Undo"
+msgstr "Deshacer"
+
+#: ui/main-window.slint:222
+msgctxt "MenuBar"
+msgid "Redo"
+msgstr "Rehacer"
+
+#: ui/main-window.slint:233
+msgctxt "MenuBar"
+msgid "Preferences"
+msgstr "Ajustes"
+
+#: ui/main-window.slint:242
+msgctxt "MenuBar"
+msgid "View"
+msgstr "Vista"
+
+#: ui/main-window.slint:246
+msgctxt "MenuBar"
+msgid "Hide Object List"
+msgstr "Ocultar la lista de objetos"
+
+#: ui/main-window.slint:247
+msgctxt "MenuBar"
+msgid "Show Object List"
+msgstr "Mostrar lista de objetos"
+
+#: ui/main-window.slint:257
+msgctxt "MenuBar"
+msgid "Help"
+msgstr "Ayuda"
+
+#: ui/main-window.slint:259
+msgctxt "MenuBar"
+msgid "Documentation"
+msgstr "Documentación"
+
+#: ui/main-window.slint:264
+msgctxt "MenuBar"
+msgid "Show Release Notes"
+msgstr "Mostrar notas de lanzamiento"
+
+#: ui/main-window.slint:271
+msgctxt "MenuBar"
+msgid "Report Issue"
+msgstr "Informar de un problema"
+
+#: ui/main-window.slint:278
+msgctxt "MenuBar"
+msgid "Check for Updates…"
+msgstr "Comprobar actualizaciones…"
+
+#: ui/main-window.slint:285
+msgctxt "MenuBar"
+msgid "About"
+msgstr "Acerca de"
+
+#: ui/main-window.slint:292
+msgctxt "MenuBar"
+msgid "View License"
+msgstr "Ver licencia"
+
+#: ui/main-window.slint:304
+msgctxt "MainWindow"
+msgid "Open a 3D model to visualize it here"
+msgstr "Abrir modelo 3D para visualizarlo aquí"
+
+#: ui/main-window.slint:412
+msgctxt "DropOverlay"
+msgid "Drop to open"
+msgstr "Suelta para abrir"
+
+#: ui/mesh-viewer.slint:129
+msgctxt "MeshViewer"
+msgid "3D model viewer, empty"
+msgstr "Visor de modelos 3D, vacío"
+
+#: ui/mesh-viewer.slint:130
+msgctxt "MeshViewer"
+msgid "3D model viewer"
+msgstr "Visor de modelos 3D"
+
+#: ui/mesh-viewer.slint:131
+msgctxt "MeshViewer"
+msgid ""
+"Right-click drag or arrow keys to rotate. Shift with right-click drag, "
+"middle-click drag, or Shift and arrow keys to pan. Scroll, Plus/Minus, or "
+"Page Up/Down to zoom. Press F or Home to frame the model. Press 1, 3, or 7 "
+"for front, right, or top views; hold Control for back, left, or bottom."
+msgstr ""
+"Arrastre con el botón derecho del ratón o use las teclas de flecha para "
+"rotar. Desplázate con apretando el botón central del ratón y arrastrando, o "
+"Mayus y teclas de flecha para desplazar la cámara. Apretar las teclas Más/"
+"Menos o Página Arriba/Abajo para hacer zoom. Presiona F o Inicio para "
+"encuadrar el modelo. Presione 1, 3 o 7 para vistas frontal, derecha o "
+"superior; mantenga presionada la tecla Control para vista trasera, izquierda "
+"o inferior."
+
+#: ui/mesh-viewer.slint:464
+msgctxt "MeshViewer"
+msgid "Copy"
+msgstr "Copiar"
+
+#: ui/mesh-viewer.slint:490
+msgctxt "MeshViewer"
+msgid "Paste"
+msgstr "Pegar"
+
+#: src/viewport/controller.rs:944
+msgctxt "ErrorDialog"
+msgid "Failed to display the 3D model"
+msgstr "No se pudo mostrar el modelo 3D"
+
+#: src/viewport/controller.rs:948
+msgctxt "ErrorDialog"
+msgid "The rendered texture could not be handed to the UI."
+msgstr "No se ha podido pasar la textura renderizada a la interfaz gráfica."
+
+#: src/viewport/object_list.rs:39
+msgctxt "ObjectList"
+msgid "Object {}"
+msgstr "Objeto {}"
+
+#: src/wiring.rs:207
+msgctxt "FileDialog"
+msgid "All supported files"
+msgstr "Todos los archivos compatibles"
+
+#: src/wiring.rs:210 src/wiring.rs:313
+msgctxt "FileDialog"
+msgid "OBJ files"
+msgstr "Archivos OBJ"
+
+#: src/wiring.rs:212
+msgctxt "FileDialog"
+msgid "STL files"
+msgstr "Archivos STL"
+
+#: src/wiring.rs:215
+msgctxt "FileDialog"
+msgid "All files"
+msgstr "Todos los archivos"
+
+#: src/wiring.rs:268 src/wiring.rs:286
+msgctxt "ErrorDialog"
+msgid "Failed to export"
+msgstr "No se ha podido exportar"
+
+#: src/wiring.rs:269 src/wiring.rs:287 src/scene_loader.rs:325
+#: src/app_state.rs:242
+msgctxt "ErrorDialog"
+msgid "File: {}"
+msgstr "Archivo: {}"
+
+#: src/wiring.rs:305
+msgctxt "FileDialog"
+msgid "STL (binary)"
+msgstr "STL (binario)"
+
+#: src/wiring.rs:309
+msgctxt "FileDialog"
+msgid "STL (ASCII)"
+msgstr "STL (ASCII)"
+
+#: src/scene_loader.rs:290
+msgctxt "ErrorDialog"
+msgid "Failed to load the 3D model"
+msgstr "No se pudo cargar el modelo 3D"
+
+#: src/scene_loader.rs:294
+msgctxt "ErrorDialog"
+msgid "The mesh could not be prepared for rendering."
+msgstr "La malla presenta algún problema que impide su representación."
+
+#: src/scene_loader.rs:324
+msgctxt "ErrorDialog"
+msgid "Failed to open 3D model"
+msgstr "No se pudo abrir el modelo 3D"
+
+#: src/app_state.rs:241
+msgctxt "ErrorDialog"
+msgid "Unsupported file type"
+msgstr "Archivo no compatible"
+
+#: src/app_state.rs:245
+msgctxt "ErrorDialog"
+msgid "Only the following file types can be opened: {}"
+msgstr "Solo se pueden abrir los siguientes tipos de archivo: {}"
+
+#: src/mesh_loader.rs:72
+msgctxt "ErrorDialog"
+msgid "File is {} MiB, which exceeds the {} MiB limit."
+msgstr ""
+"El archivo tiene un tamaño de {} MiB, lo que supera el límite de {} MiB."

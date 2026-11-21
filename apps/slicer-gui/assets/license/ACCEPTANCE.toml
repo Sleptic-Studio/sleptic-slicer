@@ -1,0 +1,5 @@
+# Copyright (c) 2026 Sleptic
+# SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+version = "1.0"
+required = true
+text_file = "../../../../LICENSE.md"

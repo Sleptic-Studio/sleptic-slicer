@@ -1,0 +1,25 @@
+[package]
+name = "sc-3mf"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Typed 3MF documents and ordered OPC archives."
+categories = ["rendering::data-formats"]
+keywords = ["3d", "3mf", "opc", "slice"]
+
+[lints]
+workspace = true
+
+[dependencies]
+crc32fast.workspace = true
+flate2.workspace = true
+itoa.workspace = true
+memchr.workspace = true
+quick-xml.workspace = true
+rayon.workspace = true
+ryu.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

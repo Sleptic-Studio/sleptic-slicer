@@ -1,0 +1,18 @@
+[package]
+name = "sc-mesh-core"
+version = "0.1.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Deterministic indexed mesh geometry, validation, repair and simplification"
+categories = ["rendering::data-formats"]
+keywords = ["3d", "mesh"]
+
+[lints]
+workspace = true
+
+[dependencies]
+rayon.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

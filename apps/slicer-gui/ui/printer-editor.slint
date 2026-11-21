@@ -1,0 +1,134 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ThemedWindow } from "themed-window.slint";
+import { SecondaryButton as Button } from "secondary-button.slint";
+import { Palette } from "std-widgets.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { LineEdit, TextEdit, CheckBox, ScrollView, ComboBox } from "std-widgets.slint";
+import { ShellTheme } from "theme.slint";
+export struct PrinterField { label: string, value: string }
+
+// Section heading inside the editor (Orca-style printer settings groups).
+component SectionTitle inherits Text {
+    color: ShellTheme.text; font-size: 13px; font-weight: 700;
+}
+
+// "Label  [a] x [b] unit": paired values (resolution, pixel size, scale).
+component PairRow inherits HorizontalLayout {
+    in property <string> label;
+    in property <string> a;
+    in property <string> b;
+    in property <string> unit;
+    callback edited-a(string);
+    callback edited-b(string);
+    spacing: 8px; height: 32px; alignment: start;
+    Text { text: root.label; width: 130px; color: ShellTheme.text; vertical-alignment: center; }
+    LineEdit { width: 90px; text: root.a; edited(t) => { root.edited-a(t); } }
+    Text { text: "×"; color: ShellTheme.muted; vertical-alignment: center; }
+    LineEdit { width: 90px; text: root.b; edited(t) => { root.edited-b(t); } }
+    Text { text: root.unit; color: ShellTheme.muted; vertical-alignment: center; }
+}
+
+component ValueRow inherits HorizontalLayout {
+    in property <string> label;
+    in property <string> value;
+    in property <string> unit;
+    callback edited(string);
+    spacing: 8px; height: 32px; alignment: start;
+    Text { text: root.label; width: 130px; color: ShellTheme.text; vertical-alignment: center; }
+    LineEdit { width: 90px; text: root.value; edited(t) => { root.edited(t); } }
+    Text { text: root.unit; color: ShellTheme.muted; vertical-alignment: center; }
+}
+
+export component PrinterEditor inherits ThemedWindow {
+
+    in-out property <ThemePreference> theme: ThemePreference.System;
+    window-theme: root.theme;
+
+    title: @tr("Sleptic Slicer - Printer editor");
+    preferred-width: 900px; preferred-height: 780px;
+    background: ShellTheme.background;
+    // Name, resolution X / Y, pixel X / Y (microns), build X / Y / Z (mm),
+    // in that order (printer_editor.rs PATHS).
+    in property <[PrinterField]> fields;
+    in-out property <bool> mirror-x; in-out property <bool> mirror-y;
+    in-out property <string> start; in-out property <string> layer; in-out property <string> end;
+    in property <string> placeholders; in property <string> error;
+    in-out property <int> rotation;
+    in-out property <string> scale-x: "1";
+    in-out property <string> scale-y: "1";
+    callback motion-requested();
+    callback field-edited(int, string); callback validate(); callback save(); callback cancel();
+    pure function value(i: int) -> string { return root.fields.length > i ? root.fields[i].value : ""; }
+    VerticalLayout {
+        padding: 20px; spacing: 14px;
+        HorizontalLayout {
+            spacing: 8px; height: 32px;
+            Text { text: @tr("Printer name"); width: 130px; color: ShellTheme.text; vertical-alignment: center; }
+            LineEdit { text: root.value(0); edited(t) => { root.field-edited(0, t); } }
+        }
+        HorizontalLayout {
+            spacing: 32px;
+            VerticalLayout {
+                spacing: 8px; alignment: LayoutAlignment.start;
+                SectionTitle { text: @tr("Display (LCD)"); }
+                PairRow { label: @tr("Resolution"); unit: @tr("px");
+                    a: root.value(1); b: root.value(2);
+                    edited-a(t) => { root.field-edited(1, t); } edited-b(t) => { root.field-edited(2, t); } }
+                PairRow { label: @tr("Pixel size"); unit: @tr("µm");
+                    a: root.value(3); b: root.value(4);
+                    edited-a(t) => { root.field-edited(3, t); } edited-b(t) => { root.field-edited(4, t); } }
+                HorizontalLayout { spacing: 8px; height: 32px; alignment: LayoutAlignment.start;
+                    Text { width: 130px; text: @tr("Orientation"); color: ShellTheme.text; vertical-alignment: center; }
+                    ComboBox {width:85px;horizontal-stretch:0;model:["0","90","180","270"];current-index<=>root.rotation;selected=>{root.validate();}}
+                    Text { text: @tr("degrees"); color: ShellTheme.muted; vertical-alignment: center; }
+                }
+                HorizontalLayout { spacing: 16px; height: 32px; alignment: LayoutAlignment.start;
+                    Text { width: 130px; text: @tr("Mirror image"); color: ShellTheme.text; vertical-alignment: center; }
+                    CheckBox { text: @tr("Mirror X"); checked <=> root.mirror-x; toggled => { root.validate(); } }
+                    CheckBox { text: @tr("Mirror Y"); checked <=> root.mirror-y; toggled => { root.validate(); } }
+                }
+                PairRow { label: @tr("XY scale"); unit: "";
+                    a: root.scale-x; b: root.scale-y;
+                    edited-a(t) => { root.scale-x = t; root.validate(); } edited-b(t) => { root.scale-y = t; root.validate(); } }
+            }
+            VerticalLayout {
+                spacing: 8px; alignment: LayoutAlignment.start;
+                SectionTitle { text: @tr("Build volume"); }
+                ValueRow { label: @tr("Width (X)"); unit: @tr("mm"); value: root.value(5); edited(t) => { root.field-edited(5, t); } }
+                ValueRow { label: @tr("Depth (Y)"); unit: @tr("mm"); value: root.value(6); edited(t) => { root.field-edited(6, t); } }
+                ValueRow { label: @tr("Height (Z)"); unit: @tr("mm"); value: root.value(7); edited(t) => { root.field-edited(7, t); } }
+                Rectangle { height: 6px; }
+                SectionTitle { text: @tr("Motion"); }
+                HorizontalLayout { alignment: LayoutAlignment.start;
+                    Button { text: @tr("Lift and retract motion..."); clicked => { root.motion-requested(); } }
+                }
+            }
+        }
+        Rectangle { height: 1px; background: ShellTheme.border; }
+        HorizontalLayout {
+            spacing: 16px;
+            VerticalLayout {
+                spacing: 6px;
+                SectionTitle { text: @tr("Start G-code"); }
+                TextEdit { text <=> root.start; font-family: "Consolas"; edited => { root.validate(); } }
+                SectionTitle { text: @tr("Per layer G-code"); }
+                TextEdit { text <=> root.layer; font-family: "Consolas"; edited => { root.validate(); } }
+                SectionTitle { text: @tr("End G-code"); }
+                TextEdit { text <=> root.end; font-family: "Consolas"; edited => { root.validate(); } }
+            }
+            VerticalLayout {
+                width: 220px; spacing: 6px;
+                Text { text: @tr("Available placeholders"); color: ShellTheme.muted; }
+                ScrollView { Text { text: root.placeholders; color: ShellTheme.text; font-family: "Consolas"; } }
+            }
+        }
+        if root.error != "": Text { text: root.error; color: ShellTheme.error; wrap: word-wrap; }
+        HorizontalLayout {
+            alignment: LayoutAlignment.end; spacing: 8px;
+            Button { text: @tr("Cancel"); clicked => { root.cancel(); } }
+            PrimaryButton { text: @tr("Save to user library"); enabled: root.error == "";  clicked => { root.save(); } }
+        }
+    }
+}

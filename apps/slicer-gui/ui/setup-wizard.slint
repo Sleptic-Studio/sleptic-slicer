@@ -1,0 +1,264 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// First-run setup (Chitubox / Lychee style): look, printer, resin, done.
+
+import { LineEdit, ScrollView } from "std-widgets.slint";
+import { ShellTheme } from "theme.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { SecondaryButton as Button } from "secondary-button.slint";
+
+export struct SetupRow { header: bool, title: string, subtitle: string, badge: string, selected: bool }
+// R102: printers and resins as picture cards grouped by brand, like
+// PrusaSlicer's and Orca's setup wizards. `index` is the card's row in the
+// flat list the click handler resolves.
+export struct SetupCard { index: int, title: string, subtitle: string, badge: string, selected: bool, picture: image }
+export struct SetupGroup { title: string, cards: [SetupCard] }
+
+component StepDot inherits HorizontalLayout {
+    in property <int> number;
+    in property <string> label;
+    in property <int> current;
+    spacing: 8px;
+    alignment: start;
+    Rectangle {
+        width: 26px; height: 26px; border-radius: 13px;
+        background: root.current >= root.number ? ShellTheme.accent : ShellTheme.field;
+        Text {
+            text: root.current > root.number ? "\u{2713}" : "" + (root.number + 1);
+            color: root.current >= root.number ? ShellTheme.accent-text : ShellTheme.muted;
+            font-size: 12px; font-weight: 600;
+            horizontal-alignment: center; vertical-alignment: center;
+        }
+    }
+    VerticalLayout { alignment: center;
+        Text {
+            text: root.label; font-size: 13px;
+            color: root.current == root.number ? ShellTheme.text : ShellTheme.muted;
+            font-weight: root.current == root.number ? 600 : 400;
+        }
+    }
+}
+
+component ThemeCard inherits Rectangle {
+    in property <string> label;
+    in property <color> sky;
+    in property <color> bed;
+    in property <bool> active;
+    callback clicked();
+    accessible-role: button;
+    accessible-label: root.label;
+    accessible-action-default => { root.clicked(); }
+    width: 200px; height: 170px; border-radius: 10px;
+    background: ShellTheme.panel;
+    border-width: root.active ? 2px : 1px;
+    border-color: root.active ? ShellTheme.accent : touch.has-hover ? ShellTheme.muted : ShellTheme.border;
+    VerticalLayout {
+        padding: 12px; spacing: 10px;
+        Rectangle {
+            height: 110px; border-radius: 6px; background: root.sky; clip: true;
+            Rectangle { x: 0px; y: 0px; width: 30%; height: 100%; background: root.bed.transparentize(0.4); }
+            Rectangle { x: parent.width * 0.45; y: parent.height * 0.6; width: 45%; height: 22%; border-radius: 3px; background: root.bed; }
+            Rectangle { x: parent.width * 0.58; y: parent.height * 0.4; width: 18%; height: 22%; border-radius: 3px; background: #a259ff; }
+        }
+        Text { text: root.label; color: ShellTheme.text; font-size: 13px; font-weight: 600; horizontal-alignment: center; }
+    }
+    touch := TouchArea { mouse-cursor: pointer; clicked => { root.clicked(); } }
+}
+
+component PictureGrid inherits Rectangle {
+    in property <[SetupGroup]> groups;
+    in property <string> empty-text;
+    callback clicked(int);
+    property <length> gap: 10px;
+    border-radius: 8px; border-width: 1px; border-color: ShellTheme.border;
+    background: ShellTheme.panel;
+    clip: true;
+    ScrollView {
+        viewport-width: self.width;
+        VerticalLayout {
+            padding: 10px; spacing: 6px; alignment: start;
+            if root.groups.length == 0: Text { text: root.empty-text; color: ShellTheme.muted; height: 40px; vertical-alignment: center; horizontal-alignment: center; }
+            for group in root.groups: VerticalLayout { spacing: 6px;
+                Text { text: group.title; color: ShellTheme.muted; font-size: 11px; font-weight: 700; height: 22px; vertical-alignment: bottom; }
+                grid := Rectangle {
+                    property <int> cols: Math.max(2, Math.floor((self.width + root.gap) / (150px + root.gap)));
+                    property <length> card-w: (self.width - (self.cols - 1) * root.gap) / self.cols;
+                    height: Math.ceil(group.cards.length / self.cols) * (176px + root.gap);
+                    for card[i] in group.cards: Rectangle {
+                        x: Math.mod(i, grid.cols) * (grid.card-w + root.gap);
+                        y: Math.floor(i / grid.cols) * (176px + root.gap);
+                        width: grid.card-w; height: 176px;
+                        border-radius: 8px;
+                        border-width: card.selected ? 2px : 1px;
+                        border-color: card.selected ? ShellTheme.accent : card-touch.has-hover ? ShellTheme.muted : ShellTheme.border;
+                        background: card.selected ? ShellTheme.accent.transparentize(0.88) : card-touch.has-hover ? ShellTheme.field : ShellTheme.panel;
+                        accessible-role: button; accessible-label: card.title;
+                        accessible-action-default => { root.clicked(card.index); }
+                        VerticalLayout { padding: 8px; spacing: 4px;
+                            Rectangle { height: 108px;
+                                if card.picture.width > 0: Image { width: 104px; height: 104px; source: card.picture; image-fit: contain; }
+                            }
+                            Text { text: card.title; color: ShellTheme.text; font-size: 12px; font-weight: 600; horizontal-alignment: center; overflow: elide; }
+                            if card.subtitle != "": Text { text: card.subtitle; color: ShellTheme.muted; font-size: 11px; horizontal-alignment: center; overflow: elide; }
+                            if card.badge != "": Text { text: card.badge; color: ShellTheme.accent; font-size: 11px; horizontal-alignment: center; overflow: elide; }
+                        }
+                        if card.selected: Rectangle { x: parent.width - 28px; y: 8px; width: 20px; height: 20px; border-radius: 10px; background: ShellTheme.accent;
+                            Text { text: "\u{2713}"; color: ShellTheme.accent-text; font-size: 12px; font-weight: 700; }
+                        }
+                        card-touch := TouchArea { mouse-cursor: pointer; clicked => { root.clicked(card.index); } }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component SetupWizard inherits Rectangle {
+    in-out property <int> step: 0;
+    in property <int> theme-choice: 0;
+    in property <[SetupGroup]> printer-groups;
+    in property <[SetupGroup]> resin-groups;
+    in property <image> printer-picture;
+    in property <image> resin-picture;
+    in property <string> printer-name;
+    in property <string> resin-name;
+    in-out property <string> printer-search;
+    in-out property <string> resin-search;
+    callback theme-picked(int);
+    callback printer-search-edited(string);
+    callback resin-search-edited(string);
+    callback printer-clicked(int);
+    callback resin-clicked(int);
+    callback custom-printer();
+    callback skip();
+    callback finish(bool);
+
+    property <bool> can-next: root.step == 1 ? root.printer-name != "" : root.step == 2 ? root.resin-name != "" : true;
+
+    background: ShellTheme.background;
+    // Swallow clicks so nothing behind the wizard reacts.
+    TouchArea {}
+
+    Rectangle {
+        width: Math.min(880px, parent.width - 48px);
+        height: Math.min(640px, parent.height - 48px);
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        border-radius: 14px;
+        background: ShellTheme.panel;
+        border-width: 1px; border-color: ShellTheme.border;
+        drop-shadow-blur: 24px; drop-shadow-offset-y: 8px; drop-shadow-color: #00000030;
+
+        VerticalLayout {
+            padding: 28px; padding-bottom: 20px; spacing: 18px;
+
+            // Header: logo, product name, steps.
+            HorizontalLayout {
+                spacing: 12px;
+                Image { source: @image-url("../assets/images/sleptic.svg"); width: 34px; height: 34px; }
+                VerticalLayout { alignment: center;
+                    Text { text: @tr("Sleptic Slicer"); color: ShellTheme.text; font-size: 16px; font-weight: 700; }
+                    Text { text: @tr("Setup"); color: ShellTheme.muted; font-size: 12px; }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                StepDot { number: 0; label: @tr("Welcome"); current: root.step; }
+                StepDot { number: 1; label: @tr("Printer"); current: root.step; }
+                StepDot { number: 2; label: @tr("Resin"); current: root.step; }
+                StepDot { number: 3; label: @tr("Done"); current: root.step; }
+            }
+            Rectangle { height: 1px; background: ShellTheme.border; }
+
+            // Title per step.
+            VerticalLayout { spacing: 4px;
+                Text {
+                    color: ShellTheme.text; font-size: 22px; font-weight: 700;
+                    text: root.step == 0 ? @tr("Welcome to Sleptic Slicer")
+                        : root.step == 1 ? @tr("Which printer do you use?")
+                        : root.step == 2 ? @tr("Which resin are you printing with?")
+                        : @tr("You're all set");
+                }
+                Text {
+                    color: ShellTheme.muted; font-size: 13px; wrap: word-wrap;
+                    text: root.step == 0 ? @tr("Three quick choices and you're ready to print: how the app looks, your printer, and your resin.")
+                        : root.step == 1 ? @tr("Its screen size and resolution set the build plate and every slice. You can add more printers later.")
+                        : root.step == 2 ? @tr("Its exposure times are used for every layer. Resins tuned for your printer are listed first.")
+                        : @tr("These are your defaults for new projects. Change them any time from the printer and resin pickers on the left.");
+                }
+            }
+
+            // Body.
+            Rectangle {
+                vertical-stretch: 1;
+                if root.step == 0: HorizontalLayout {
+                    alignment: center; spacing: 20px;
+                    VerticalLayout { alignment: center;
+                        ThemeCard { label: @tr("Light"); sky: #eef0f3; bed: #c9ccd2; active: root.theme-choice == 0; clicked => { root.theme-picked(0); } }
+                    }
+                    VerticalLayout { alignment: center;
+                        ThemeCard { label: @tr("Dark"); sky: #1f2125; bed: #3a3d43; active: root.theme-choice == 1; clicked => { root.theme-picked(1); } }
+                    }
+                    VerticalLayout { alignment: center;
+                        ThemeCard { label: @tr("Match system"); sky: #8d939c; bed: #5d626a; active: root.theme-choice == 2; clicked => { root.theme-picked(2); } }
+                    }
+                }
+                if root.step == 1: VerticalLayout {
+                    spacing: 10px;
+                    HorizontalLayout { spacing: 10px;
+                        LineEdit { placeholder-text: @tr("Search printers (brand or model)"); text <=> root.printer-search; edited(t) => { root.printer-search-edited(t); } }
+                        Button { text: @tr("Custom printer..."); clicked => { root.custom-printer(); } }
+                    }
+                    PictureGrid { vertical-stretch: 1; groups: root.printer-groups; empty-text: @tr("No printer matches. Try another word or create a custom printer.");
+                        clicked(i) => { root.printer-clicked(i); } }
+                }
+                if root.step == 2: VerticalLayout {
+                    spacing: 10px;
+                    LineEdit { placeholder-text: @tr("Search resins (brand, name or type)"); text <=> root.resin-search; edited(t) => { root.resin-search-edited(t); } }
+                    PictureGrid { vertical-stretch: 1; groups: root.resin-groups; empty-text: @tr("No resin matches.");
+                        clicked(i) => { root.resin-clicked(i); } }
+                }
+                if root.step == 3: VerticalLayout {
+                    alignment: center; spacing: 22px;
+                    HorizontalLayout { alignment: center; spacing: 24px;
+                        for item in [
+                            { k: @tr("Printer"), v: root.printer-name, pic: root.printer-picture },
+                            { k: @tr("Resin"), v: root.resin-name, pic: root.resin-picture },
+                        ]: VerticalLayout { spacing: 6px; width: 240px;
+                            Rectangle { height: 160px; border-radius: 10px; background: ShellTheme.field;
+                                if item.pic.width > 0: Image { width: 148px; height: 148px; source: item.pic; image-fit: contain; }
+                            }
+                            Text { text: item.k; color: ShellTheme.muted; font-size: 12px; horizontal-alignment: center; }
+                            Text { text: item.v; color: ShellTheme.text; font-size: 14px; font-weight: 600; horizontal-alignment: center; wrap: word-wrap; }
+                        }
+                    }
+                    Text { text: @tr("How a print goes"); color: ShellTheme.text; font-size: 14px; font-weight: 600; horizontal-alignment: center; }
+                    HorizontalLayout { alignment: center; spacing: 10px;
+                        for step[i] in [@tr("Add a model"), @tr("Auto prepare"), @tr("Slice"), @tr("Send to printer")]: HorizontalLayout { spacing: 10px;
+                            Rectangle { height: 30px; width: step-text.preferred-width + 40px; border-radius: 15px; background: ShellTheme.field;
+                                HorizontalLayout { padding-left: 6px; padding-right: 12px; spacing: 8px;
+                                    VerticalLayout { alignment: center;
+                                        Rectangle { width: 20px; height: 20px; border-radius: 10px; background: ShellTheme.accent;
+                                            Text { text: i + 1; color: ShellTheme.accent-text; font-size: 11px; font-weight: 700; }
+                                        }
+                                    }
+                                    step-text := Text { text: step; color: ShellTheme.text; font-size: 13px; vertical-alignment: center; }
+                                }
+                            }
+                            if i < 3: Text { text: "\u{2192}"; color: ShellTheme.muted; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+
+            // Footer.
+            HorizontalLayout {
+                spacing: 10px;
+                if root.step < 3: Button { text: @tr("Skip setup"); clicked => { root.skip(); } }
+                Rectangle { horizontal-stretch: 1; }
+                if root.step > 0: Button { text: @tr("Back"); clicked => { root.step -= 1; } }
+                if root.step < 3: PrimaryButton { text: @tr("Next"); enabled: root.can-next; clicked => { root.step += 1; } }
+                if root.step == 3: Button { text: @tr("Open a model..."); clicked => { root.finish(true); } }
+                if root.step == 3: PrimaryButton { text: @tr("Start slicing"); clicked => { root.finish(false); } }
+            }
+        }
+    }
+}

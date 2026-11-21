@@ -1,0 +1,25 @@
+[package]
+name = "sc-print-profiles"
+version = "0.2.0"
+edition.workspace = true
+license-file = "LICENSE.md"
+authors = ["Sleptic"]
+description = "Printer and material profile types, loading, and resolution for the resin-printing pipeline."
+categories = ["data-structures"]
+keywords = ["3d", "printing", "resin", "sla", "profiles"]
+
+[lints]
+workspace = true
+
+[dependencies]
+sc-app-paths = { workspace = true }
+sc-print-primitives = { workspace = true, features = ["serde"] }
+chrono = { workspace = true }
+semver = { workspace = true }
+serde = { workspace = true }
+toml_edit = { workspace = true }
+zip.workspace = true
+sc-3mf.workspace = true
+
+[dev-dependencies]
+tempfile = "3.23.0"

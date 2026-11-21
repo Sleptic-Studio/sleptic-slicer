@@ -1,0 +1,44 @@
+# Sleptic Slicer GUI. Built by `python3 flatpak.py build` (see README.md).
+id: com.sleptic.slicer
+command: sc-slicer-gui
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions: [org.freedesktop.Sdk.Extension.rust-stable]
+
+# A window drawn with wgpu (GPU + Wayland or X11). No file access: the open
+# and save dialogs go through the desktop portal.
+finish-args: [--device=dri, --share=ipc, --socket=wayland, --socket=fallback-x11]
+
+modules:
+  - name: slicer
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+      env:
+        CARGO_HOME: /run/build/slicer/cargo
+        CARGO_NET_OFFLINE: '1'
+        # skia-bindings links the archive skia-binaries.source.json places here.
+        SKIA_BINARIES_URL: file:///run/build/slicer/skia-binaries.tar.gz
+    build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release
+      - install -Dm755 -t /app/bin target/release/sc-slicer-gui target/release/sc-slicer-cli
+      # Printer and resin profiles, found through XDG_DATA_DIRS (/app/share).
+      - mkdir -p /app/share/slicer && cp -r assets/profiles /app/share/slicer/
+      - install -Dm644 packages/shared/com.sleptic.slicer.desktop -t /app/share/applications
+      - install -Dm644 packages/shared/com.sleptic.slicer.svg -t /app/share/icons/hicolor/scalable/apps
+    sources:
+      # Written by flatpak.py: the packed tree with its checksum (the checksum
+      # is what tells flatpak-builder the tree changed).
+      - .cache/source.source.json
+      - cargo-sources.json
+      - skia-binaries.source.json
+
+  # Its own module so that a new build date reruns only this step.
+  - name: metainfo
+    buildsystem: simple
+    build-commands:
+      - install -Dm644 com.sleptic.slicer.metainfo.xml -t /app/share/metainfo
+    sources:
+      - .cache/metainfo.source.json

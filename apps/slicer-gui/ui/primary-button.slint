@@ -1,0 +1,60 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ShellTheme } from "theme.slint";
+
+// The brand's primary call to action (Slice): an accent-filled button with
+// white text and icon. A custom component because the std style's primary
+// Button takes its colour from the platform palette, not the Sleptic theme.
+export component PrimaryButton inherits Rectangle {
+    in property <string> text;
+    in property <image> icon;
+    in property <bool> enabled: true;
+    callback clicked();
+
+    accessible-role: button;
+    accessible-label: root.text;
+    accessible-enabled: root.enabled;
+    accessible-action-default => { if root.enabled { root.clicked(); } }
+
+    min-width: 90px;
+    height: 36px;
+    forward-focus: focus;
+    focus := FocusScope {
+        key-pressed(event) => {
+            if (root.enabled && (event.text == Key.Return || event.text == " ")) { root.clicked(); return accept; }
+            return reject;
+        }
+    }
+    border-radius: ShellTheme.radius;
+    background: !root.enabled ? ShellTheme.field
+        : touch.pressed ? ShellTheme.accent.darker(0.15)
+        : touch.has-hover ? ShellTheme.accent-hover
+        : ShellTheme.accent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        alignment: center;
+        // No icon: no reserved slot, so the label is truly centred.
+        if root.icon.width > 0: Image {
+            source: root.icon;
+            width: 18px;
+            colorize: root.enabled ? ShellTheme.accent-text : ShellTheme.muted;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.text;
+            color: root.enabled ? ShellTheme.accent-text : ShellTheme.muted;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => { root.clicked(); }
+    }
+}
+

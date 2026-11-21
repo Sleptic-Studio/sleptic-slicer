@@ -1,0 +1,106 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { CheckBox, LineEdit, ScrollView } from "std-widgets.slint";
+import { ThemedWindow } from "themed-window.slint";
+import { ShellTheme } from "theme.slint";
+import { ThemePreference } from "preferences/appearance.slint";
+import { DimText, EscapeScope, FormBody } from "form-parts.slint";
+
+// A caption and a text box on one row.
+component NamedField inherits HorizontalLayout {
+    in property <string> caption;
+    in-out property <string> value;
+    // Rust sets the starting value after the box exists, and typing breaks
+    // the box's binding, so each new value from Rust is copied in again.
+    changed value => { entry.text = root.value; }
+    spacing: 12px;
+    DimText {
+        text: root.caption;
+        min-width: 56px;
+        vertical-alignment: center;
+    }
+    entry := LineEdit {
+        text: root.value;
+        horizontal-stretch: 1;
+        edited(typed) => { root.value = typed; }
+    }
+    public function focus-entry() {
+        entry.focus();
+    }
+}
+
+// Copies a resin profile under a new brand and name, with the parts of the
+// original the user keeps ticked: intent, defaults, and each calibration
+// block (all ticked at first). Rust builds the copy from these choices.
+export component ForkDialog inherits ThemedWindow {
+    title: @tr("ForkDialog" => "Fork resin profile");
+    icon: @image-url("../assets/images/sleptic.svg");
+    background: ShellTheme.panel;
+    preferred-width: 480px;
+    preferred-height: 380px;
+    min-width: 420px;
+    min-height: 300px;
+    init => { name-field.focus-entry(); }
+
+    in-out property <ThemePreference> fork-dialog-theme: ThemePreference.System;
+    window-theme: root.fork-dialog-theme;
+
+    in property <string> fork-source-caption;
+    in-out property <string> new-profile-name;
+    in-out property <string> new-profile-brand;
+    in-out property <bool> include-source-intent: true;
+    in-out property <bool> include-source-defaults: true;
+    // A box per calibration block of the original; Rust keeps which are
+    // ticked, told through `source-block-selection-changed`.
+    in property <[string]> source-block-captions;
+    in property <string> fork-validation-message;
+
+    callback source-block-selection-changed(int, bool);
+    callback create-fork-requested();
+    callback dismiss-fork-requested();
+
+    EscapeScope {
+        width: parent.width;
+        height: parent.height;
+        escaped => { root.dismiss-fork-requested(); }
+
+        FormBody {
+            heading: @tr("ForkDialog" => "Fork {}", root.fork-source-caption);
+            problem: root.fork-validation-message;
+            confirm-label: @tr("ForkDialog" => "Create");
+            confirmed => { root.create-fork-requested(); }
+            cancelled => { root.dismiss-fork-requested(); }
+
+            NamedField {
+                caption: @tr("ForkDialog" => "Brand");
+                value <=> root.new-profile-brand;
+            }
+            name-field := NamedField {
+                caption: @tr("ForkDialog" => "Name");
+                value <=> root.new-profile-name;
+            }
+
+            DimText { text: @tr("ForkDialog" => "Copy from the source:"); }
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    alignment: start;
+                    spacing: 6px;
+                    CheckBox {
+                        text: @tr("ForkDialog" => "Intent");
+                        checked <=> root.include-source-intent;
+                    }
+                    CheckBox {
+                        text: @tr("ForkDialog" => "Defaults");
+                        checked <=> root.include-source-defaults;
+                    }
+                    for caption[at] in root.source-block-captions: CheckBox {
+                        text: @tr("ForkDialog" => "Calibration: {}", caption);
+                        checked: true;
+                        toggled => { root.source-block-selection-changed(at, self.checked); }
+                    }
+                }
+            }
+        }
+    }
+}

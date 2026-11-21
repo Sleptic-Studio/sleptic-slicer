@@ -1,0 +1,34 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ShellTheme } from "../theme.slint";
+
+// Marks a printer or resin as a favourite, drawn like the stars in the
+// main window's printer and resin chooser: a filled yellow star when it is
+// one, an outline otherwise. Clicking only asks for the change (the page
+// makes it), and the click stops here, so the row is not selected too.
+export component PreferenceFavoriteMarker inherits Rectangle {
+    in property <bool> preference-marked;
+    callback preference-toggle-requested();
+
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: hover.has-hover ? ShellTheme.field : transparent;
+    accessible-role: checkbox;
+    accessible-checked: root.preference-marked;
+    accessible-label: @tr("Favourite");
+    accessible-action-default => { root.preference-toggle-requested(); }
+
+    Text {
+        text: root.preference-marked ? "\u{2605}" : "\u{2606}";
+        font-size: 17px;
+        color: root.preference-marked ? ShellTheme.icon-yellow : ShellTheme.muted;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    hover := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.preference-toggle-requested(); }
+    }
+}

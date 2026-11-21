@@ -1,0 +1,32 @@
+# Sleptic Slicer command-line tool. Built by `python3 flatpak.py build`.
+# It has an application id of its own because Flatpak exports one command
+# per id; it compiles only sc-slicer-cli (no Slint, no Skia).
+id: com.sleptic.slicer.cli
+command: sc-slicer-cli
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions: [org.freedesktop.Sdk.Extension.rust-stable]
+
+# The exported command passes its arguments to the tool, so a caller cannot
+# add a --filesystem grant at run time, and a command line has no portal.
+# The grant is made here; narrow it with `flatpak override` if wanted.
+finish-args: [--filesystem=host]
+
+modules:
+  - name: slicer-cli
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+      env:
+        CARGO_HOME: /run/build/slicer-cli/cargo
+        CARGO_NET_OFFLINE: '1'
+    build-commands:
+      # The fetch reads the whole lock file, the build only the CLI.
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release -p sc-slicer-cli
+      - install -Dm755 -t /app/bin target/release/sc-slicer-cli
+      - mkdir -p /app/share/slicer && cp -r assets/profiles /app/share/slicer/
+    sources:
+      - .cache/source.source.json
+      - cargo-sources.json

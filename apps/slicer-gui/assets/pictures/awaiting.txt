@@ -1,0 +1,3 @@
+# Bundled profiles whose product picture is still to be made (one per line,
+# kind/id). The picture check allows these to have none, and fails once one
+# of them has a picture, so this list never goes stale.

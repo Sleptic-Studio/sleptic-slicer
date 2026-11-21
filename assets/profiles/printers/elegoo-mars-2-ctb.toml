@@ -1,0 +1,33 @@
+[identity]
+id = "elegoo-mars-2-ctb"
+manufacturer = "ELEGOO"
+family = "Mars"
+name = "Mars 2"
+profile_version = "1.0.0"
+
+[hardware.build_volume]
+x_mm = 129.02
+y_mm = 80.68
+z_mm = 160.0
+
+[hardware.pixel_resolution]
+x = 2560
+y = 1620
+
+[hardware.pixel_size_microns]
+x = 50.4
+y = 49.8
+
+[hardware.mirror]
+x = true
+y = false
+
+[capabilities]
+supports_grayscale = true
+two_stage_lift = false
+has_camera = false
+
+[[capabilities.output_formats]]
+format = "ctb"
+
+[constraints]

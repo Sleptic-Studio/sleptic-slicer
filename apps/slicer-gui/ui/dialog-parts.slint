@@ -1,0 +1,155 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// Shared parts of the message dialogs (R112): the round badge beside the
+// heading, the footer band that holds the buttons, and the technical
+// details box with a Copy button. The maintainer found the old error and
+// information pop-ups unprofessional: a yellow "!" for every error, the
+// actual reason hidden behind a toggle, and buttons floating on the body.
+import { ShellTheme } from "theme.slint";
+import { ScrollView } from "std-widgets.slint";
+
+// 0 error (red cross), 1 warning (orange "!"), 2 information (blue "i").
+export component DialogBadge inherits Rectangle {
+    in property <int> kind: 0;
+    property <color> tone: root.kind == 0 ? ShellTheme.error : root.kind == 1 ? ShellTheme.warning : ShellTheme.accent;
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    background: root.tone.with-alpha(0.12);
+    border-width: 1.5px;
+    border-color: root.tone.with-alpha(0.4);
+    Path {
+        x: 8px;
+        y: 8px;
+        width: 20px;
+        height: 20px;
+        viewbox-width: 20;
+        viewbox-height: 20;
+        stroke: root.tone;
+        stroke-width: 2.6px;
+        commands: root.kind == 0 ? "M 5.5 5.5 L 14.5 14.5 M 14.5 5.5 L 5.5 14.5" : root.kind == 1 ? "M 10 3.5 L 10 11.5 M 10 15 L 10 16.2" : "M 10 3.6 L 10 4.8 M 10 8.2 L 10 16.4";
+    }
+}
+
+// The buttons' band along the bottom of a dialog, right-aligned.
+export component DialogFooter inherits Rectangle {
+    background: ShellTheme.background;
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: ShellTheme.border;
+    }
+    HorizontalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 8px;
+        alignment: end;
+        @children
+    }
+}
+
+// "Show technical details" and, opened, the details in a box with a Copy
+// button. The text is selectable, so part of it can be copied too.
+export component DetailsBox inherits VerticalLayout {
+    in property <string> details;
+    in property <string> show-label: @tr("Show technical details");
+    in property <string> hide-label: @tr("Hide technical details");
+    in-out property <bool> open: false;
+    property <bool> copied: false;
+    spacing: 8px;
+    HorizontalLayout {
+        alignment: start;
+        TouchArea {
+            width: toggle-row.preferred-width;
+            height: toggle-row.preferred-height;
+            mouse-cursor: pointer;
+            accessible-role: button;
+            accessible-label: root.open ? root.hide-label : root.show-label;
+            accessible-action-default => { self.clicked(); }
+            clicked => {
+                root.open = !root.open;
+                root.copied = false;
+            }
+            toggle-row := HorizontalLayout {
+                spacing: 4px;
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: root.open ? @image-url("icons/chevron-down.svg") : @image-url("icons/chevron-right.svg");
+                        width: 14px;
+                        height: 14px;
+                        colorize: ShellTheme.accent;
+                    }
+                }
+                Text {
+                    text: root.open ? root.hide-label : root.show-label;
+                    font-size: 0.85rem;
+                    color: ShellTheme.accent;
+                    accessible-role: none;
+                }
+            }
+        }
+    }
+    if root.open: Rectangle {
+        background: ShellTheme.background;
+        border-radius: 6px;
+        border-width: 1px;
+        border-color: ShellTheme.border;
+        VerticalLayout {
+            padding: 10px;
+            spacing: 6px;
+            HorizontalLayout {
+                Text {
+                    text: @tr("Details");
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    color: ShellTheme.muted;
+                    vertical-alignment: center;
+                    horizontal-stretch: 1;
+                }
+                TouchArea {
+                    width: copy-label.preferred-width + 8px;
+                    height: copy-label.preferred-height + 4px;
+                    mouse-cursor: pointer;
+                    accessible-role: button;
+                    accessible-label: @tr("Copy details");
+                    accessible-action-default => { self.clicked(); }
+                    clicked => {
+                        details-text.select-all();
+                        details-text.copy();
+                        details-text.clear-selection();
+                        root.copied = true;
+                    }
+                    copy-label := Text {
+                        x: 4px;
+                        y: 2px;
+                        text: root.copied ? @tr("Copied") : @tr("Copy");
+                        font-size: 0.8rem;
+                        color: ShellTheme.accent;
+                        accessible-role: none;
+                    }
+                }
+            }
+            ScrollView {
+                max-height: 150px;
+                min-height: Math.min(details-text.preferred-height, 150px);
+                viewport-width: self.visible-width;
+                viewport-height: details-text.preferred-height;
+                details-text := TextInput {
+                    width: parent.width;
+                    text: root.details;
+                    read-only: true;
+                    single-line: false;
+                    wrap: word-wrap;
+                    font-family: "Consolas";
+                    font-size: 0.8rem;
+                    color: ShellTheme.text;
+                    selection-background-color: ShellTheme.accent.with-alpha(0.3);
+                    selection-foreground-color: ShellTheme.text;
+                }
+            }
+        }
+    }
+}

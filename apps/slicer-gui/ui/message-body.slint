@@ -1,0 +1,79 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// The upper part of the error and information dialogs: the badge, then the
+// heading, an optional line of context, the message, and any details,
+// shown as plain text when short or behind the details box when long.
+// Every text arrives from the dialog using it, so each stays translated in
+// that dialog's own context.
+import { ShellTheme } from "theme.slint";
+import { DialogBadge, DetailsBox } from "dialog-parts.slint";
+
+export component MessageBody inherits HorizontalLayout {
+    // The badge: 0 error, 2 information (see `DialogBadge`), and what a
+    // screen reader says for it.
+    in property <int> badge-kind;
+    in property <string> badge-label;
+    in property <string> heading;
+    in property <string> context;
+    in property <string> message;
+    in property <string> details;
+    // Plain-worded details are shown as text; Rust decides
+    // (`error_dialog::inline_details`).
+    in property <bool> details-inline;
+    // The details box's toggle labels; empty keeps the box's own.
+    in property <string> show-details-label;
+    in property <string> hide-details-label;
+
+    padding: 24px;
+    padding-bottom: 22px;
+    spacing: 14px;
+
+    VerticalLayout {
+        alignment: start;
+        DialogBadge {
+            kind: root.badge-kind;
+            accessible-role: text;
+            accessible-label: root.badge-label;
+        }
+    }
+
+    VerticalLayout {
+        alignment: start;
+        spacing: 8px;
+        horizontal-stretch: 1;
+
+        Text {
+            text: root.heading;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: ShellTheme.text;
+            wrap: word-wrap;
+        }
+        if root.context != "": Text {
+            text: root.context;
+            font-size: 0.8rem;
+            color: ShellTheme.muted;
+            wrap: word-wrap;
+        }
+        if root.message != "": Text {
+            text: root.message;
+            font-size: 0.9rem;
+            color: ShellTheme.text;
+            wrap: word-wrap;
+        }
+        if root.details != "" && root.details-inline: Text {
+            text: root.details;
+            font-size: 0.9rem;
+            color: ShellTheme.muted;
+            wrap: word-wrap;
+        }
+        if root.details != "" && !root.details-inline && root.show-details-label == "": DetailsBox {
+            details: root.details;
+        }
+        if root.details != "" && !root.details-inline && root.show-details-label != "": DetailsBox {
+            details: root.details;
+            show-label: root.show-details-label;
+            hide-label: root.hide-details-label;
+        }
+    }
+}

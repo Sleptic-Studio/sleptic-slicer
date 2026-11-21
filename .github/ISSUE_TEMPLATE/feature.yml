@@ -1,0 +1,16 @@
+name: Feature request
+description: Something the slicer should do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The job you want done and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How should it work?
+      description: Optional. Other slicers that do it well (Orca, Bambu, Lychee, Chitubox) are useful references.

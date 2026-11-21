@@ -1,0 +1,34 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { SecondaryButton as Button } from "secondary-button.slint";
+import { LineEdit } from "std-widgets.slint";
+import { ShellTheme } from "theme.slint";
+export struct MotionField { label:string, value:string, group:int, help:string }
+export component MotionEditor inherits VerticalLayout {
+    in property <[MotionField]> fields;
+    in property <string> timeline;
+    in property <[float]> phases;
+    callback edited(int,string);
+    property <bool> advanced:false;
+    spacing:4px;
+    Text { text:@tr("Motion"); color:ShellTheme.text; font-weight:600; }
+    Text { text:@tr("Blank fields inherit the profile. Speeds are mm/min, distances mm, waits s."); color:ShellTheme.muted; wrap:word-wrap; }
+    for row[index] in root.fields: HorizontalLayout {
+        visible:row.group == 0 || root.advanced;
+        height:row.group == 0 || root.advanced ? 28px : 0px;
+        Rectangle {horizontal-stretch:1;
+            Text {x:0px;y:0px;width:parent.width;height:parent.height;text:row.label;color:ShellTheme.text;vertical-alignment:center;horizontal-alignment:left;}
+            hint:=TouchArea {mouse-cursor:help;}
+            if hint.has-hover: Rectangle {x:0px;y:28px;width:300px;height:62px;z:100;background:ShellTheme.panel;border-width:1px;border-color:ShellTheme.border;
+                Text {x:6px;y:5px;width:parent.width - 12px;height:parent.height - 10px;text:row.help;color:ShellTheme.text;wrap:word-wrap;}
+            }
+        }
+        LineEdit { width:85px; text:row.value; edited => {root.edited(index,self.text);} }
+    }
+    Button { text:root.advanced ? @tr("Hide bottom / transition overrides") : @tr("Bottom / transition overrides"); clicked => {root.advanced=!root.advanced;} }
+    HorizontalLayout { height:12px; spacing:2px;
+        for duration[index] in root.phases: Rectangle { background: index == 2 || index == 5 ? ShellTheme.muted : ShellTheme.accent; horizontal-stretch:Math.max(0.05,duration); }
+
+    }
+    Text { text:root.timeline; color:ShellTheme.muted; wrap:word-wrap; }
+}

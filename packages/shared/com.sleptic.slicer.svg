@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Sleptic mark: an "S" built from five printed layers, in the Sleptic primary blue. -->
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5aa2ff"/>
+      <stop offset="1" stop-color="#1565c0"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#brand)">
+    <rect x="30" y="14" width="74" height="16" rx="5"/>
+    <rect x="24" y="35" width="22" height="16" rx="5"/>
+    <rect x="27" y="56" width="74" height="16" rx="5"/>
+    <rect x="82" y="77" width="22" height="16" rx="5"/>
+    <rect x="24" y="98" width="74" height="16" rx="5"/>
+  </g>
+</svg>

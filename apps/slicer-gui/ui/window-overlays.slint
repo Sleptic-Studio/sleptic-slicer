@@ -1,0 +1,113 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { Button, ProgressIndicator } from "std-widgets.slint";
+import { ShellTheme } from "theme.slint";
+
+// Covers the window while a file is dragged over it: a dimmed view with a
+// card in the middle saying what a drop does. Nothing in it takes the
+// pointer, so the drag events still reach the window.
+export component DropOverlay inherits Rectangle {
+    background: ShellTheme.scrim;
+
+    Rectangle {
+        // Inset from the window edge, outlined in the accent colour.
+        x: 16px;
+        y: 16px;
+        width: parent.width - 32px;
+        height: parent.height - 32px;
+        border-radius: 12px;
+        border-width: 2px;
+        border-color: ShellTheme.accent;
+        background: ShellTheme.background.with-alpha(0.6);
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 10px;
+            HorizontalLayout {
+                alignment: center;
+                Image {
+                    source: @image-url("icons/drop.svg");
+                    colorize: ShellTheme.accent;
+                    width: 40px;
+                    height: 40px;
+                }
+            }
+            Text {
+                text: @tr("Drop to open");
+                color: ShellTheme.text;
+                font-size: 1.5rem;
+                font-weight: 600;
+                horizontal-alignment: center;
+            }
+        }
+    }
+}
+
+// Shown over everything while a plate is sliced. It takes every click and
+// key, so the scene cannot change under the slicer: Escape or the button
+// cancels, other keys are swallowed.
+export component SliceModal inherits Rectangle {
+    // The plate being sliced, and how far it is.
+    in property <string> plate-label;
+    in property <int> layers-done;
+    in property <int> layers-planned;
+    in property <float> fraction;
+    callback cancel();
+
+    background: ShellTheme.modal-scrim;
+
+    // Swallows the clicks meant for the scene underneath.
+    TouchArea { }
+
+    keys := FocusScope {
+        init => {
+            keys.focus();
+        }
+        key-pressed(key) => {
+            if key.text == Key.Escape {
+                root.cancel();
+            }
+            accept
+        }
+    }
+
+    card := Rectangle {
+        width: Math.min(360px, root.width * 60%);
+        height: column.preferred-height;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        background: ShellTheme.panel;
+        border-color: ShellTheme.border;
+        border-width: 1px;
+        border-radius: 10px;
+        drop-shadow-blur: 12px;
+        drop-shadow-color: ShellTheme.panel-shadow;
+
+        column := VerticalLayout {
+            padding: 18px;
+            spacing: 10px;
+            Text {
+                text: root.plate-label;
+                color: ShellTheme.text;
+                font-weight: 600;
+                horizontal-alignment: center;
+            }
+            Text {
+                // Layer counts appear once the slicer knows them.
+                text: root.layers-planned <= 0
+                    ? @tr("SlicePanel" => "Preparing...")
+                    : @tr("SlicePanel" => "Slicing layer {} / {}", root.layers-done, root.layers-planned);
+                color: ShellTheme.muted;
+                horizontal-alignment: center;
+            }
+            ProgressIndicator { progress: root.fraction; }
+            HorizontalLayout {
+                alignment: center;
+                Button {
+                    text: @tr("SlicePanel" => "Cancel");
+                    clicked => { root.cancel(); }
+                }
+            }
+        }
+    }
+}

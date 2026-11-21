@@ -1,0 +1,304 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+import { ListView, Palette } from "std-widgets.slint";
+import { SecondaryButton as Button } from "../secondary-button.slint";
+import { ShellTheme } from "../theme.slint";
+import { PreferencesPage } from "./preferences-page.slint";
+import { PreferenceFavoriteMarker } from "./favourite-star.slint";
+
+// What a calibration tag stands for, which sets its colours.
+export enum CalibrationTagClass {
+    // A calibration for the default printer.
+    default-printer-calibration,
+    // The calibration any printer without its own falls back to.
+    shared-calibration,
+    // A calibration for some other printer; with no default printer set,
+    // every tag is this kind and the whole list reads muted.
+    alternate-printer-calibration,
+    // Shown alone on a resin that has no calibration at all.
+    absent-calibration-data,
+}
+
+// A calibration tag: a printer's name, or "Generic" / "No calibration
+// data" already translated by Rust.
+export struct CalibrationTagData {
+    calibration-caption: string,
+    calibration-class: CalibrationTagClass,
+}
+
+// A resin row. `resin-catalog-position` is the resin's place in the Rust
+// catalog and what every callback carries; an extension row has its
+// resin's, so either row selects the same resin. Slint layouts do not
+// wrap, so Rust splits the tags into lines to fit the width reported.
+export struct ResinProfileEntry {
+    resin-display-name: string,
+    resin-brand-name: string,
+    resin-family-name: string,
+    calibration-tag-lines: [[CalibrationTagData]],
+    has-custom-profile: bool,
+    marked-as-favourite: bool,
+    represents-extension: bool,
+    allows-extension: bool,
+    resin-catalog-position: int,
+    // Sleptic's render of the resin (or the user's own photo), as beside
+    // the resin picker; none on extension rows.
+    picture: image,
+    has-picture: bool,
+}
+
+// A rounded tag with its text and a tooltip saying what it means.
+component CalibrationTag inherits Rectangle {
+    in property <CalibrationTagData> pill;
+    in property <brush> fill;
+    in property <brush> ink;
+    property <string> meaning: root.pill.calibration-class == CalibrationTagClass.absent-calibration-data
+        ? @tr("PreferencesPage" => "No calibration data")
+        : root.pill.calibration-class == CalibrationTagClass.shared-calibration
+            ? @tr("PreferencesPage" => "Generic calibration")
+            : @tr("PreferencesPage" => "Calibration: {}", root.pill.calibration-caption);
+    background: root.fill;
+    border-radius: 9px;
+    width: label.preferred-width + 14px;
+    height: label.preferred-height + 6px;
+
+    label := Text {
+        text: root.pill.calibration-caption;
+        color: root.ink;
+        font-size: 0.75rem;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    Tooltip {
+        text: @markdown("\{root.meaning}");
+    }
+}
+
+// The small "custom" mark after a user's own resin.
+component CustomMark inherits Rectangle {
+    background: ShellTheme.field;
+    border-radius: 4px;
+    width: mark.preferred-width + 10px;
+
+    mark := Text {
+        text: @tr("PreferencesPage" => "custom");
+        color: ShellTheme.text;
+        font-size: 0.7rem;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// Everything a resin row can ask for, so one callback carries it.
+enum RowAction { select, star, view, fork, extend, edit, delete }
+
+// A tag's colours: green for the default printer, orange for generic, red
+// for no data, a faint neutral for any other printer.
+struct TagColours { fill: brush, ink: brush }
+
+component ResinRow inherits Rectangle {
+    in property <ResinProfileEntry> resin;
+    in property <bool> chosen;
+    in property <bool> dark;
+    // The width left for the tags changed (sent when made, too).
+    callback room-changed(length);
+    callback act(RowAction);
+
+    // An extension row sits indented under its resin.
+    property <length> indent: root.resin.represents-extension ? 32px : 8px;
+    // What the tags may use: the row less its left indent, its 8px right
+    // padding, the three 8px gaps between columns, the star's 24px and the
+    // buttons. Taken from the buttons, never from the tags, so the width
+    // cannot depend on itself.
+    property <length> tag-room: self.width - self.indent - 8px - 24px - 24px - controls.width;
+    changed tag-room => { root.room-changed(self.tag-room); }
+
+    pure function colours(kind: CalibrationTagClass) -> TagColours {
+        if kind == CalibrationTagClass.default-printer-calibration {
+            return root.dark ? { fill: ShellTheme.tag-1d4a29, ink: ShellTheme.tag-a9e8b8 } : { fill: ShellTheme.tag-cdeed6, ink: ShellTheme.tag-0d5223 };
+        }
+        if kind == CalibrationTagClass.shared-calibration {
+            return root.dark ? { fill: ShellTheme.tag-4a3d14, ink: ShellTheme.tag-f0d284 } : { fill: ShellTheme.tag-fcecc5, ink: ShellTheme.tag-6b4e00 };
+        }
+        if kind == CalibrationTagClass.absent-calibration-data {
+            return root.dark ? { fill: ShellTheme.tag-571e24, ink: ShellTheme.tag-f2b4bc } : { fill: ShellTheme.tag-f6d3d7, ink: ShellTheme.tag-8a1c28 };
+        }
+        return { fill: Palette.foreground.transparentize(0.92), ink: Palette.foreground.transparentize(0.45) };
+    }
+
+    height: columns.preferred-height;
+    // A light tint, not the full selection colour, so the text stays
+    // readable (R112).
+    background: root.chosen ? ShellTheme.accent.with-alpha(0.12) : transparent;
+
+    actions := ContextMenuArea {
+        Menu {
+            MenuItem { title: @tr("PreferencesPage" => "View"); activated => { root.act(RowAction.view); } }
+            MenuItem { title: @tr("PreferencesPage" => "Fork..."); activated => { root.act(RowAction.fork); } }
+            if root.resin.allows-extension: MenuItem { title: @tr("PreferencesPage" => "Extend..."); activated => { root.act(RowAction.extend); } }
+            if root.resin.has-custom-profile: MenuItem { title: @tr("PreferencesPage" => "Edit"); activated => { root.act(RowAction.edit); } }
+            if root.resin.has-custom-profile: MenuItem { title: @tr("PreferencesPage" => "Delete..."); activated => { root.act(RowAction.delete); } }
+        }
+
+        // Below the row's content, so the star and buttons keep their own
+        // clicks and any other click selects. It takes every press, the
+        // right button's too, so it opens the menu itself.
+        TouchArea {
+            clicked => { root.act(RowAction.select); }
+            pointer-event(press) => {
+                if press.kind == PointerEventKind.down && press.button == PointerEventButton.right {
+                    actions.show({ x: self.mouse-x, y: self.mouse-y });
+                }
+            }
+        }
+
+        columns := HorizontalLayout {
+            padding: 8px;
+            padding-left: root.indent;
+            spacing: 8px;
+
+            VerticalLayout {
+                alignment: center;
+                PreferenceFavoriteMarker {
+                    preference-marked: root.resin.marked-as-favourite;
+                    preference-toggle-requested => { root.act(RowAction.star); }
+                }
+            }
+
+            // One width for every row, so the names line up.
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 40px;
+                    height: 40px;
+                    if root.resin.has-picture: Image {
+                        source: root.resin.picture;
+                        width: parent.width;
+                        height: parent.height;
+                        image-fit: contain;
+                    }
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: 4px;
+                HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    Text {
+                        text: root.resin.resin-brand-name + " " + root.resin.resin-display-name;
+                        font-size: 0.95rem;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: root.resin.resin-family-name;
+                        color: Palette.foreground.transparentize(0.4);
+                        font-size: 0.75rem;
+                        vertical-alignment: center;
+                    }
+                    // Apart from the tags, in its own colours.
+                    if root.resin.has-custom-profile: CustomMark { }
+                }
+                for line in root.resin.calibration-tag-lines: HorizontalLayout {
+                    alignment: start;
+                    spacing: 4px;
+                    for pill in line: CalibrationTag {
+                        pill: pill;
+                        fill: root.colours(pill.calibration-class).fill;
+                        ink: root.colours(pill.calibration-class).ink;
+                    }
+                }
+            }
+
+            Rectangle { horizontal-stretch: 1; }
+
+            // View always, Edit for the user's own profiles.
+            controls := VerticalLayout {
+                alignment: center;
+                HorizontalLayout {
+                    spacing: 4px;
+                    Button {
+                        text: @tr("PreferencesPage" => "View");
+                        clicked => { root.act(RowAction.view); }
+                    }
+                    if root.resin.has-custom-profile: Button {
+                        text: @tr("PreferencesPage" => "Edit");
+                        clicked => { root.act(RowAction.edit); }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component ResinPage inherits PreferencesPage {
+    page-title: @tr("PreferencesPage" => "Resins");
+    subtitle: @tr("PreferencesPage" => "Resin profiles for your printers: view, fork, extend or edit them, and import or export packages.");
+    stretch-content: true;
+
+    in property <[ResinProfileEntry]> resin-profile-rows;
+    // The selected resin's catalog index; -1 for none.
+    in-out property <int> active-resin-position: -1;
+
+    callback resin-row-selected(int);
+    // The star: a resin is a favourite as a whole, so a resin row and its
+    // extension row share the flag (and the catalog index sent).
+    callback resin-favourite-changed(int);
+    // The width a row has for its tags (catalog index, extension row,
+    // width), so Rust can split them into lines that fit.
+    callback calibration-tag-room-changed(int, bool, length);
+    callback resin-view-requested(int);
+    callback resin-fork-requested(int);
+    callback resin-extend-requested(int);
+    // Edit and Delete say whether they came from an extension row: then
+    // the catalog index means the extension file, not the whole profile.
+    callback resin-edit-requested(int, bool);
+    callback resin-delete-requested(int, bool);
+    callback resin-import-requested();
+    callback resin-export-requested();
+
+    ListView {
+        vertical-stretch: 1;
+        for entry in root.resin-profile-rows: ResinRow {
+            resin: entry;
+            chosen: entry.resin-catalog-position == root.active-resin-position;
+            dark: Palette.color-scheme == ColorScheme.dark;
+            room-changed(room) => {
+                root.calibration-tag-room-changed(entry.resin-catalog-position, entry.represents-extension, room);
+            }
+            act(what) => {
+                if what == RowAction.select {
+                    root.active-resin-position = entry.resin-catalog-position;
+                    root.resin-row-selected(entry.resin-catalog-position);
+                } else if what == RowAction.star {
+                    root.resin-favourite-changed(entry.resin-catalog-position);
+                } else if what == RowAction.view {
+                    root.resin-view-requested(entry.resin-catalog-position);
+                } else if what == RowAction.fork {
+                    root.resin-fork-requested(entry.resin-catalog-position);
+                } else if what == RowAction.extend {
+                    root.resin-extend-requested(entry.resin-catalog-position);
+                } else if what == RowAction.edit {
+                    root.resin-edit-requested(entry.resin-catalog-position, entry.represents-extension);
+                } else {
+                    root.resin-delete-requested(entry.resin-catalog-position, entry.represents-extension);
+                }
+            }
+        }
+    }
+
+    HorizontalLayout {
+        vertical-stretch: 0;
+        alignment: start;
+        spacing: 8px;
+        Button {
+            text: @tr("PreferencesPage" => "Import package...");
+            clicked => { root.resin-import-requested(); }
+        }
+        Button {
+            text: @tr("PreferencesPage" => "Export materials...");
+            clicked => { root.resin-export-requested(); }
+        }
+    }
+}

@@ -1,0 +1,163 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// Preferences: the section rail on the left and a stack of the four pages
+// on the right, of which the chosen one shows. The pages live as long as
+// the window, so each keeps its scroll position and fields between visits,
+// and their callbacks are this window's callbacks (aliased, not relayed).
+
+import { ThemedWindow } from "../themed-window.slint";
+import { ShellTheme } from "../theme.slint";
+import { PreferenceNavigationRail } from "../sidebar.slint";
+import { AppearancePage, ThemePreference } from "./appearance.slint";
+import { PrinterPage, PrinterEntry } from "./printer.slint";
+import { ResinPage, ResinProfileEntry } from "./resin.slint";
+import { SlicingPage } from "./slicing.slint";
+
+export component PreferencesWindow inherits ThemedWindow {
+    title: @tr("Preferences");
+    icon: @image-url("../../assets/images/sleptic.svg");
+    background: ShellTheme.background;
+    preferred-width: 860px;
+    preferred-height: 600px;
+    min-width: 640px;
+    min-height: 420px;
+    // The rail takes the keyboard first, so the arrows move between
+    // sections at once; Escape reaches the scope below from anywhere.
+    forward-focus: rail;
+
+    in-out property <ThemePreference> theme: ThemePreference.System;
+    window-theme: root.theme;
+    // 0 Appearance, 1 Printers, 2 Resins, 3 Slicing.
+    in-out property <int> section: 0;
+
+    // Appearance and slicing.
+    in property <[string]> languages;
+    in-out property <int> language-row: 0;
+    in-out property <string> currency: "$";
+    in-out property <int> aa-row <=> slicing.current-aa-index;
+    callback theme-picked(ThemePreference);
+    callback language-picked(int);
+    callback currency-edited(string);
+    callback aa-picked <=> slicing.aa-level-changed;
+
+    // Printers.
+    in property <[PrinterEntry]> printer-tiles <=> printers.tiles;
+    in property <[string]> printer-makers <=> printers.makers;
+    in property <string> printer-query <=> printers.query;
+    in-out property <int> maker-shown <=> printers.maker-shown;
+    in-out property <int> chosen-printer <=> printers.chosen-printer;
+    in property <int> chosen-printer-tile <=> printers.chosen-tile;
+    callback printer-maker-picked <=> printers.maker-picked;
+    callback printer-query-edited <=> printers.query-edited;
+    callback printer-picked <=> printers.printer-picked;
+    callback printer-star-toggled <=> printers.star-toggled;
+    callback open-printer <=> printers.open-printer;
+    callback export-printers <=> printers.export-printers;
+
+    // Resins.
+    in property <[ResinProfileEntry]> resin-list <=> resins.resin-profile-rows;
+    in-out property <int> chosen-resin <=> resins.active-resin-position;
+    // The tag pills' size worked out against this window's rem; Rust
+    // measures the pill labels at exactly this size.
+    out property <length> tag-font-size: 0.75rem;
+    callback resin-picked <=> resins.resin-row-selected;
+    callback resin-star-toggled <=> resins.resin-favourite-changed;
+    callback tag-measured <=> resins.calibration-tag-room-changed;
+    callback view-resin <=> resins.resin-view-requested;
+    callback fork-resin <=> resins.resin-fork-requested;
+    callback extend-resin <=> resins.resin-extend-requested;
+    callback edit-resin <=> resins.resin-edit-requested;
+    callback delete-resin <=> resins.resin-delete-requested;
+    callback export-resins <=> resins.resin-export-requested;
+
+    // Both pages offer the same package import.
+    callback import-package();
+    callback closing();
+
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.closing();
+                return accept;
+            }
+            reject
+        }
+
+        HorizontalLayout {
+            rail := PreferenceNavigationRail {
+                current-item <=> root.section;
+                heading: @tr("PreferencesMenu" => "Preferences");
+                title: @tr("PreferencesMenu" => "Preferences Sections");
+                section-labels: [
+                    @tr("PreferencesMenu" => "Appearance"),
+                    @tr("PreferencesMenu" => "Printers"),
+                    @tr("PreferencesMenu" => "Resins"),
+                    @tr("PreferencesMenu" => "Slicing"),
+                ];
+                icons: [
+                    @image-url("../icons/appearance.svg"),
+                    @image-url("../icons/device.svg"),
+                    @image-url("../icons/droplet.svg"),
+                    @image-url("../icons/layers.svg"),
+                ];
+                Text {
+                    text: @tr("PreferencesMenu" => "Changes are saved as you make them.");
+                    color: ShellTheme.muted;
+                    font-size: 0.75rem;
+                    wrap: word-wrap;
+                }
+            }
+
+            // The page stack.
+            Rectangle {
+                horizontal-stretch: 1;
+
+                AppearancePage {
+                    width: parent.width;
+                    height: parent.height;
+                    visible: root.section == 0;
+                    chosen-appearance-theme: root.theme;
+                    available-display-languages: root.languages;
+                    chosen-language-position: root.language-row;
+                    currency-symbol-text: root.currency;
+                    // Kept here as well as reported, so the window shows
+                    // the choice before Rust answers.
+                    appearance-theme-chosen(choice) => {
+                        root.theme = choice;
+                        root.theme-picked(choice);
+                    }
+                    display-language-chosen(row) => {
+                        root.language-row = row;
+                        root.language-picked(row);
+                    }
+                    currency-symbol-edited(symbol) => {
+                        root.currency = symbol;
+                        root.currency-edited(symbol);
+                    }
+                }
+
+                printers := PrinterPage {
+                    width: parent.width;
+                    height: parent.height;
+                    visible: root.section == 1;
+                    // The gallery scrolls to the chosen printer once.
+                    scroll-to-choice: true;
+                    import-package => { root.import-package(); }
+                }
+
+                resins := ResinPage {
+                    width: parent.width;
+                    height: parent.height;
+                    visible: root.section == 2;
+                    resin-import-requested => { root.import-package(); }
+                }
+
+                slicing := SlicingPage {
+                    width: parent.width;
+                    height: parent.height;
+                    visible: root.section == 3;
+                }
+            }
+        }
+    }
+}

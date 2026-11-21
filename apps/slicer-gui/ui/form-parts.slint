@@ -1,0 +1,79 @@
+// Copyright (c) 2026 Sleptic
+// SPDX-License-Identifier: LicenseRef-Sleptic-Source-1.0
+// Pieces the profile form dialogs (fork, extend) share: the heading, a dim line of
+// explanation, the error line beside the buttons, and Escape to leave.
+import { Palette } from "std-widgets.slint";
+import { ShellTheme } from "theme.slint";
+import { DialogFooter } from "dialog-parts.slint";
+import { PrimaryButton } from "primary-button.slint";
+import { SecondaryButton } from "secondary-button.slint";
+
+// A dialog's bold heading, wrapped when long.
+export component DialogHeading inherits Text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    wrap: word-wrap;
+}
+
+// Secondary text: a hint under the heading or a label beside a field.
+export component DimText inherits Text {
+    font-size: 0.85rem;
+    color: Palette.foreground.transparentize(0.3);
+}
+
+// What went wrong, in the error colour, taking the room left of the
+// buttons in their row.
+export component ErrorLine inherits Text {
+    color: ShellTheme.error;
+    font-size: 0.85rem;
+    wrap: word-wrap;
+    vertical-alignment: center;
+    horizontal-stretch: 1;
+}
+
+// Turns Escape, pressed anywhere inside, into `escaped` (key events
+// bubble up to here). Give it the whole dialog.
+export component EscapeScope inherits FocusScope {
+    callback escaped();
+
+    key-pressed(event) => {
+        if event.text != Key.Escape {
+            return reject;
+        }
+        root.escaped();
+        return accept;
+    }
+}
+
+// The body of a small form dialog: the heading, the dialog's own fields
+// (its children), then the footer band with what went wrong on the left
+// and the confirming button and Cancel on the right.
+export component FormBody inherits VerticalLayout {
+    in property <string> heading;
+    in property <string> problem;
+    in property <string> confirm-label;
+    in property <bool> confirm-enabled: true;
+    callback confirmed();
+    callback cancelled();
+
+    VerticalLayout {
+        padding: 20px;
+        spacing: 12px;
+        vertical-stretch: 1;
+        DialogHeading { text: root.heading; }
+        @children
+    }
+
+    DialogFooter {
+        ErrorLine { text: root.problem; }
+        PrimaryButton {
+            text: root.confirm-label;
+            enabled: root.confirm-enabled;
+            clicked => { root.confirmed(); }
+        }
+        SecondaryButton {
+            text: @tr("FormBody" => "Cancel");
+            clicked => { root.cancelled(); }
+        }
+    }
+}
